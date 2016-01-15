@@ -4,6 +4,8 @@ nicklausw's attempt at a portable
 snes assembler */
 
 #include <iostream> // basics
+#include <fstream> // io
+#include <string> // string
 using namespace std; // print
 
 // definitions
@@ -11,8 +13,9 @@ using namespace std; // print
 #define fail 1
 
 // function declarations
-void help(string prog_name);
-int snesasm(string in, string out);
+void help(string prog_name); // help message
+int snesasm(string in, string out); // the true main function
+bool file_existent(string name); // file validity check
 
 int main(int argc, char **argv)
 {
@@ -23,18 +26,29 @@ int main(int argc, char **argv)
     }
     
     // hand it all off to snesasm()
-    if (snesasm(argv[1], argv[2]) == fail) return fail;
+    if (snesasm(string(argv[1]), string(argv[2])) == fail) return fail;
     return success;
 }
 
 void help(string prog_name)
 {
-    cout << "snesasm by nicklausw\n";
-    cout << "args: " << prog_name << " [in file] [out file]\n";
+    cerr << "snesasm by nicklausw\n";
+    cerr << "args: " << prog_name << " [in file] [out file]\n";
 }
 
 int snesasm(string in, string out)
 {
-    // do it all!
+    if (file_existent(in) == false) {
+        cerr << "error: file " << in << " doesn't exist\n";
+        return fail;
+    }
+    
+    
     return success;
+}
+
+bool file_existent(string name)
+{
+    ifstream file(name.c_str());
+    return file.good();
 }
