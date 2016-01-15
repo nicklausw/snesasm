@@ -1,0 +1,17 @@
+This file states how the inner workings of the assembler are planned to work.
+
+snesasm opens up the file and...
+1. gets rid of extraneous tabs and spaces, keeps basics.
+2. reads through file for .includes, adds in files accordingly.
+3. repeat 1 and 2 until file properly spaced, no includes.
+4. parse into tokens.
+5. have a pass for calculating labels and defines.
+6. organize labels and defines by size.
+7. have a pass for actually putting stuff in the rom.
+
+a problem: opcodes can have multiple sizes that can be changed during the
+second pass. to account for this, the assembler simply goes through and offsets
+all the labels (and calculated defines) according to the bigger opcode size.
+
+snesasm does not link. it writes straight into a file, and that's that.
+this also means no multiple modules to worry about.
