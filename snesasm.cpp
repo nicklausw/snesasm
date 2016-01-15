@@ -1,7 +1,13 @@
 /* snesasm
 
 nicklausw's attempt at a portable
-snes assembler */
+snes assembler 
+
+licensed under the isc license. you
+should have gotten a copy with snesasm,
+if not then visit http://nicklausw.github.io/isc.txt 
+
+enjoy. */
 
 #include <iostream> // basics
 #include <fstream> // io
