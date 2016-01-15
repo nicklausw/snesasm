@@ -1,0 +1,11 @@
+snesasm
+-------
+a wip snes assembler by nicklausw
+
+designed to be super portable, written in c++ and hopefully distributed
+in just one big cpp file. the asm6 of snes, basically.
+
+build: g++ -o snesasm snesasm.cpp
+test: ./snesasm snesasm.s snesasm.sfc
+
+currently does not work very well at all. heh.
