@@ -12,6 +12,7 @@ enjoy. */
 #include <iostream> // basics
 #include <fstream> // io
 #include <string> // string
+#include <sstream> // file streams
 using namespace std; // print
 
 // definitions
@@ -21,7 +22,8 @@ using namespace std; // print
 // function declarations
 void help(string prog_name); // help message
 int snesasm(string in, string out); // the true main function
-bool file_existent(string name); // file validity check
+bool file_existent(string name); // file existence check
+string file_to_string(string file); // speaks for itself
 
 int main(int argc, char **argv)
 {
@@ -49,6 +51,8 @@ int snesasm(string in, string out)
         return fail;
     }
     
+    // read file into string
+    string ins = file_to_string(in);
     
     return success;
 }
@@ -57,4 +61,23 @@ bool file_existent(string name)
 {
     ifstream file(name.c_str());
     return file.good();
+}
+
+string file_to_string(string file)
+{
+    ifstream in(file.c_str()); // file stream
+    string new_str; // eventual return value
+    char in_c; // char for comparison
+    
+    // read into new_str converting tabs to spaces
+    while (!in.eof()) {
+        in.get(in_c);
+        if (in_c == '\t') {
+            new_str.append(" ");
+        } else {
+            new_str.append(string(1, in_c));
+        }
+    }
+    
+    return new_str;
 }
