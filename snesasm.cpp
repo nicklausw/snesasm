@@ -43,10 +43,11 @@ typedef struct {
 vector<token> tokens;
 
 // token types
-int tkNUM = 0; // number
-int tkDIR = 1; // directive
-int tkLB = 2; // label
-int tkOP = 3; // opcode
+int tkUNDEF = 0; // fail
+int tkNUM = 1; // number
+int tkDIR = 2; // directive
+int tkLB = 3; // label
+int tkOP = 4; // opcode
 
 string ins; // universal file string
 
