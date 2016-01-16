@@ -13,6 +13,7 @@ enjoy. */
 #include <fstream> // io
 #include <string> // string
 #include <sstream> // file streams
+#include <vector> // vectors
 using namespace std; // print
 
 // definitions
@@ -23,7 +24,19 @@ using namespace std; // print
 void help(string prog_name); // help message
 int snesasm(string in, string out); // the true main function
 bool file_existent(string name); // file existence check
-string file_to_string(string file); // speaks for itself
+void file_to_string(string file); // speaks for itself
+int lexer(); // the wonderful lexer magic
+
+// token struct
+typedef struct {
+    int token_type; // type
+    string token_i; // internals
+} token;
+
+// tokens vector
+vector<token> tokens;
+
+string ins; // universal file string
 
 int main(int argc, char **argv)
 {
@@ -52,7 +65,10 @@ int snesasm(string in, string out)
     }
     
     // read file into string
-    string ins = file_to_string(in);
+    file_to_string(in);
+    
+    // lexer magic
+    if (lexer() == fail) return fail;
     
     return success;
 }
@@ -63,42 +79,47 @@ bool file_existent(string name)
     return file.good();
 }
 
-string file_to_string(string file)
+void file_to_string(string file)
 {
     ifstream in(file.c_str()); // file stream
     string str; // temporary build-up string
-    string new_str; // eventual return value
     char in_c; // char for comparison
     unsigned int counter = 0; // basic counter
+    
+    // clear ins
+    ins.clear();
     
     // read into new_str converting tabs to spaces
     while (!in.eof()) {
         in.get(in_c);
         if (in_c == '\t') {
-            new_str.append(" ");
+            ins.append(" ");
         } else {
-            new_str.append(string(1, in_c));
+            ins.append(string(1, in_c));
         }
     }
     
-    str = new_str;
+    str = ins;
     
     // simplify multiple spaces to one space
-    new_str.clear();
+    ins.clear();
     
     while (counter <= str.length()) {
         if (str[counter] == ' ') {
-            new_str.append(" ");
+            ins.append(" ");
             while (str[counter] == ' ') {
                 counter++;
                 if (counter == str.length())
                     break;
             }
         } else {
-            new_str.append(string(1, str[counter]));
+            ins.append(string(1, str[counter]));
             counter++;
         }
     }
-    
-    return new_str;
+}
+
+int lexer()
+{
+    return success;
 }
