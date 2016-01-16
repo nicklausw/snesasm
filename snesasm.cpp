@@ -100,6 +100,5 @@ string file_to_string(string file)
         }
     }
     
-    cout << new_str;
     return new_str;
 }
