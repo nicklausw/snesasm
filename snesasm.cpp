@@ -31,6 +31,8 @@ bool file_existent(string name); // file existence check
 void file_to_string(string file); // speaks for itself
 int lexer(); // the wonderful lexer magic
 int append_token(unsigned int counter, int current_token); // add token to string
+int pass_1(); // first pass: get directives, labels, defines
+int pass_2(); // second pass: calculate stuff, fix stuff, write to rom
 
 
 // token struct
@@ -50,6 +52,14 @@ int tkLB = 3; // label
 int tkOP = 4; // opcode
 
 string ins; // universal file string
+
+// snes variables
+bool compcheck_flag = false;
+bool autoromsize_flag = false;
+int romsize = 0;
+int carttype = 0;
+int licenseecode = 0;
+int version = 0;
 
 
 int main(int argc, char **argv)
@@ -80,11 +90,11 @@ int snesasm(string in, string out)
         return fail;
     }
     
-    // read file into string
-    file_to_string(in);
     
-    // lexer magic
-    if (lexer() == fail) return fail;
+    file_to_string(in); // read file
+    if (lexer() == fail) return fail; // lexer magic
+    if (pass_1() == fail) return fail; // pass 1
+    if (pass_2() == fail) return fail; // pass 2
     
     return success;
 }
@@ -170,12 +180,11 @@ int lexer()
     
     while (counter <= ins.length()) {
         // handle newlines
-        if (ins[counter] == '\n') {
+        if (ins[counter] == '\n' || ins[counter] == ' ') {
             if (ct_used == false) {
                 counter++;
                 continue;
             } else {
-                current_token++;
                 // handle vector size
                 tokens.resize((current_token+1)*sizeof(token));
                 
@@ -189,12 +198,6 @@ int lexer()
         
         
         // no newline means do a token
-        
-        // skip space
-        if (ins[counter] == ' ') {
-            counter++;
-            continue;
-        }
         
         if (ins[counter] == '.') {
             // directive
@@ -210,6 +213,15 @@ int lexer()
             // opcode
             ct_used = true;
             tokens[current_token].token_type = tkOP;
+            
+            counter = append_token(counter, current_token);
+            
+            // no need for a counter++ here, it's handled above.
+            continue;
+        } else if (isdigit(ins[counter])) {
+            // number
+            ct_used = true;
+            tokens[current_token].token_type = tkNUM;
             
             counter = append_token(counter, current_token);
             
@@ -235,4 +247,27 @@ int append_token(unsigned int counter, int current_token)
     }
     
     return counter;
+}
+
+int pass_1()
+{
+    for (unsigned int counter = 0; counter < (tokens.size())/sizeof(token); counter++) {
+        cout << tokens[counter].token_type << ": " << tokens[counter].token_i << '\n';
+        
+        if (tokens[counter].token_type == tkDIR) {
+            if (tokens[counter].token_i == "compcheck") {
+                compcheck_flag = true;
+            } else if (tokens[counter].token_i == "autoromsize") {
+                autoromsize_flag = true;
+            }
+        }
+    }
+    
+    return success;
+}
+
+
+int pass_2()
+{
+    return success;
 }

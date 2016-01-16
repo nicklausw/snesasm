@@ -15,7 +15,7 @@
 ;.name "THIS IS A TEST"
 .carttype 0 ; rom only
 .licenseecode 0
-.version $01
+.version 1
 
 ; now the code
 ;.bank 0
