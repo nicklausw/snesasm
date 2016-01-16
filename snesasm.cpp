@@ -15,6 +15,7 @@ enjoy. */
 #include <string> // string
 #include <sstream> // file streams
 #include <vector> // vectors
+#include <cctype> // char checks
 using namespace std; // print
 
 
@@ -29,6 +30,7 @@ int snesasm(string in, string out); // the true main function
 bool file_existent(string name); // file existence check
 void file_to_string(string file); // speaks for itself
 int lexer(); // the wonderful lexer magic
+int append_token(unsigned int counter, int current_token); // add token to string
 
 
 // token struct
@@ -198,12 +200,19 @@ int lexer()
             ct_used = true;
             tokens[current_token].token_type = tkDIR;
             counter++; // skip period
-            while (ins[counter] != ' ' && ins[counter] != '\n') {
-                if (counter == ins.length())
-                    break; // no overflows please!
-                tokens[current_token].token_i.append(string(1, ins[counter]));
-                counter++;
-            }
+            
+            counter = append_token(counter, current_token);
+            
+            // no need for a counter++ here, it's handled above.
+            continue;
+        } else if (isalpha(ins[counter])) {
+            // opcode
+            ct_used = true;
+            cout << "opcode: " << ins[counter] << "\n";
+            tokens[current_token].token_type = tkOP;
+            
+            counter = append_token(counter, current_token);
+            
             // no need for a counter++ here, it's handled above.
             continue;
         }
@@ -213,4 +222,17 @@ int lexer()
     }
     
     return success;
+}
+
+
+int append_token(unsigned int counter, int current_token)
+{
+    while (ins[counter] != ' ' && ins[counter] != '\n') {
+                if (counter == ins.length())
+                    break; // no overflows please!
+                tokens[current_token].token_i.append(string(1, ins[counter]));
+                counter++;
+    }
+    
+    return counter;
 }

@@ -12,7 +12,7 @@
 .compcheck ; checksum
 .autoromsize ; compute rom size in header
 .romsize 7 ; ...or on your own.
-.name "THIS IS A TEST"
+;.name "THIS IS A TEST"
 .carttype 0 ; rom only
 .licenseecode 0
 .version $01
@@ -20,5 +20,5 @@
 ; now the code
 ;.bank 0
 
-;clc
-;xce
+clc
+xce
