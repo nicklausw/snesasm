@@ -66,8 +66,10 @@ bool file_existent(string name)
 string file_to_string(string file)
 {
     ifstream in(file.c_str()); // file stream
+    string str; // temporary build-up string
     string new_str; // eventual return value
     char in_c; // char for comparison
+    unsigned int counter = 0; // basic counter
     
     // read into new_str converting tabs to spaces
     while (!in.eof()) {
@@ -79,5 +81,25 @@ string file_to_string(string file)
         }
     }
     
+    str = new_str;
+    
+    // simplify multiple spaces to one space
+    new_str.clear();
+    
+    while (counter <= str.length()) {
+        if (str[counter] == ' ') {
+            new_str.append(" ");
+            while (str[counter] == ' ') {
+                counter++;
+                if (counter == str.length())
+                    break;
+            }
+        } else {
+            new_str.append(string(1, str[counter]));
+            counter++;
+        }
+    }
+    
+    cout << new_str;
     return new_str;
 }
