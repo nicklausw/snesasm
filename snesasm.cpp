@@ -209,7 +209,6 @@ int lexer()
         } else if (isalpha(ins[counter])) {
             // opcode
             ct_used = true;
-            cout << "opcode: " << ins[counter] << "\n";
             tokens[current_token].token_type = tkOP;
             
             counter = append_token(counter, current_token);
