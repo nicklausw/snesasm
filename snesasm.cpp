@@ -9,6 +9,7 @@ if not then visit http://nicklausw.github.io/isc.txt
 
 enjoy. */
 
+
 #include <iostream> // basics
 #include <fstream> // io
 #include <string> // string
@@ -16,9 +17,11 @@ enjoy. */
 #include <vector> // vectors
 using namespace std; // print
 
+
 // definitions
 #define success 0
 #define fail 1
+
 
 // function declarations
 void help(string prog_name); // help message
@@ -26,6 +29,7 @@ int snesasm(string in, string out); // the true main function
 bool file_existent(string name); // file existence check
 void file_to_string(string file); // speaks for itself
 int lexer(); // the wonderful lexer magic
+
 
 // token struct
 typedef struct {
@@ -37,6 +41,7 @@ typedef struct {
 vector<token> tokens;
 
 string ins; // universal file string
+
 
 int main(int argc, char **argv)
 {
@@ -51,11 +56,13 @@ int main(int argc, char **argv)
     return success;
 }
 
+
 void help(string prog_name)
 {
     cerr << "snesasm by nicklausw\n";
     cerr << "args: " << prog_name << " [in file] [out file]\n";
 }
+
 
 int snesasm(string in, string out)
 {
@@ -73,11 +80,13 @@ int snesasm(string in, string out)
     return success;
 }
 
+
 bool file_existent(string name)
 {
     ifstream file(name.c_str());
     return file.good();
 }
+
 
 void file_to_string(string file)
 {
@@ -137,7 +146,36 @@ void file_to_string(string file)
     }
 }
 
+
 int lexer()
 {
+    // the crazy part, tokens
+    unsigned int counter = 0; // counter again
+    int current_token = 0; // vector location value
+    bool ct_used = false; // current token usage
+    
+    while (counter <= ins.length()) {
+        // handle newlines
+        if (ins[counter] == '\n') {
+            if (ct_used == false) {
+                counter++;
+                continue;
+            } else {
+                current_token++;
+                // handle vector size
+                tokens.resize(current_token+1);
+                
+                // get ready for another loop
+                ct_used = false;
+                counter++;
+                current_token++;
+                continue;
+            }
+        }
+        
+        // no newline means do a token
+        counter++;
+    }
+    
     return success;
 }
