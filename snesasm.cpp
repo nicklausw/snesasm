@@ -40,6 +40,12 @@ typedef struct {
 // tokens vector
 vector<token> tokens;
 
+// token types
+int tkNUM = 0; // number
+int tkDIR = 1; // directive
+int tkLB = 2; // label
+int tkOP = 3; // opcode
+
 string ins; // universal file string
 
 
@@ -154,6 +160,11 @@ int lexer()
     int current_token = 0; // vector location value
     bool ct_used = false; // current token usage
     
+    // we need the token vector big enough
+    // for the first token, obviously
+    tokens.resize(1);
+    
+    
     while (counter <= ins.length()) {
         // handle newlines
         if (ins[counter] == '\n') {
@@ -163,7 +174,7 @@ int lexer()
             } else {
                 current_token++;
                 // handle vector size
-                tokens.resize(current_token+1);
+                tokens.resize((current_token+1)*sizeof(token));
                 
                 // get ready for another loop
                 ct_used = false;
@@ -173,7 +184,31 @@ int lexer()
             }
         }
         
+        
         // no newline means do a token
+        
+        // skip space
+        if (ins[counter] == ' ') {
+            counter++;
+            continue;
+        }
+        
+        if (ins[counter] == '.') {
+            // directive
+            ct_used = true;
+            tokens[current_token].token_type = tkDIR;
+            counter++; // skip period
+            while (ins[counter] != ' ' && ins[counter] != '\n') {
+                if (counter == ins.length())
+                    break; // no overflows please!
+                tokens[current_token].token_i.append(string(1, ins[counter]));
+                counter++;
+            }
+            // no need for a counter++ here, it's handled above.
+            continue;
+        }
+        
+        // be sure to move on to next symbol.
         counter++;
     }
     
