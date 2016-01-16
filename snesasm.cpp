@@ -117,6 +117,24 @@ void file_to_string(string file)
             counter++;
         }
     }
+    
+    // do same to remove comments
+    ins.clear();
+    counter = 0;
+    
+    while (counter <= str.length()) {
+        if (str[counter] == ';') {
+            ins.append("\n");
+            while (str[counter] != '\n') {
+                counter++;
+                if (counter == str.length())
+                    break;
+            }
+        } else {
+            ins.append(string(1, str[counter]));
+            counter++;
+        }
+    }
 }
 
 int lexer()
