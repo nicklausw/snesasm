@@ -1,3 +1,0 @@
-all:
-	g++ -std=c++0x -pedantic-errors -Wall -Os -o snesasm snesasm.cpp
-	./snesasm snesasm.s snesasm.sfc
