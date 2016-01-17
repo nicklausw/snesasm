@@ -36,6 +36,7 @@ int pass_1(); // first pass: get directives, labels, defines
 int pass_2(); // second pass: calculate stuff, fix stuff, write to rom
 int hint_next_token_type(unsigned int counter, string cur); // speaks for itself
 string hint_next_token_dat(unsigned int counter, string cur); // same
+int one_numeric_arg(string str, unsigned int counter); // directives with one number arg
 
 
 // token struct
@@ -261,37 +262,13 @@ int pass_1()
             } else if (tokens[counter].token_i == "autoromsize") {
                 autoromsize_flag = true;
             } else if (tokens[counter].token_i == "romsize") {
-                if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
-                    cout << "error: romsize expects numeric args\n";
-                    return fail;
-                } else {
-                    romsize = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
-                    counter++;
-                }
+                counter = one_numeric_arg("romsize", counter);
             } else if (tokens[counter].token_i == "carttype") {
-                if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
-                    cout << "error: carttype expects numeric args\n";
-                    return fail;
-                } else {
-                    carttype = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
-                    counter++;
-                }
+                counter = one_numeric_arg("carttype", counter);
             } else if (tokens[counter].token_i == "licenseecode") {
-                if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
-                    cout << "error: licenseecode expects numeric args\n";
-                    return fail;
-                } else {
-                    licenseecode = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
-                    counter++;
-                }
+                counter = one_numeric_arg("licenseecode", counter);
             } else if (tokens[counter].token_i == "version") {
-                if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
-                    cout << "error: version expects numeric args\n";
-                    return fail;
-                } else {
-                    version = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
-                    counter++;
-                }
+                counter = one_numeric_arg("version", counter);
             } else {
                 cout << "error: unknown directive \"" << tokens[counter].token_i << "\"\n";
                 return fail;
@@ -331,4 +308,18 @@ string hint_next_token_dat(unsigned int counter, string cur)
     }
     
     return tokens[counter+1].token_i;
+}
+
+
+int one_numeric_arg(string str, unsigned int counter)
+{
+    if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
+        cout << "error: " << str << " expects numeric args\n";
+        exit(fail);
+    } else {
+        romsize = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+        counter++;
+    }
+    
+    return counter;
 }
