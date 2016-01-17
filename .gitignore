@@ -1,4 +1,5 @@
-# ignore objects and execs.
+# ignore objects and execs, and test file.
+snesasm.sfc
 snesasm
 *.o
 *.exe
