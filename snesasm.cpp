@@ -13,7 +13,6 @@ enjoy. */
 #include <iostream> // basics
 #include <fstream> // io
 #include <string> // string
-#include <sstream> // file streams
 #include <vector> // vectors
 #include <cctype> // char checks
 #include <cstdlib> // exit
