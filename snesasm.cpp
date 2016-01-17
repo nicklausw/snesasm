@@ -17,6 +17,7 @@ enjoy. */
 #include <vector> // vectors
 #include <cctype> // char checks
 #include <cstdlib> // exit
+#include <iterator> // vector to file
 using namespace std; // print
 
 
@@ -36,7 +37,7 @@ bool file_existent(string name); // file existence check
 void file_to_string(string file); // speaks for itself
 int lexer(); // the wonderful lexer magic
 int append_token(unsigned int counter, int current_token); // add token to string
-int pass(string out); // pass function
+int pass(); // pass function
 int hint_next_token_type(unsigned int counter, string cur); // speaks for itself
 string hint_next_token_dat(unsigned int counter, string cur); // same
 int one_numeric_arg(string str, unsigned int counter, int range); // directives with one number arg
@@ -82,6 +83,10 @@ long banksize = 0;
 long tr = 0;
 
 
+// the rom vector
+vector<char> rom;
+
+
 int main(int argc, char **argv)
 {
     // args!
@@ -113,7 +118,10 @@ int snesasm(string in, string out)
     
     file_to_string(in); // read file
     if (lexer() == fail) return fail; // lexer magic
-    if (pass(out) == fail) return fail; // pass
+    if (pass() == fail) return fail; // pass
+    
+    ofstream outs(out);
+    copy(rom.begin(), rom.end(), ostreambuf_iterator<char>(outs));
     
     return success;
 }
@@ -283,12 +291,8 @@ int append_token(unsigned int counter, int current_token)
     return counter;
 }
 
-int pass(string out)
-{
-    // file stuff, yay
-    ofstream outs;
-    outs.open(out);
-    
+int pass()
+{    
     for (unsigned int counter = 0; counter < (tokens.size())/sizeof(token); counter++) {
         if (tokens[counter].token_type == tkDIR) {
             if (tokens[counter].token_i == "compcheck") {
@@ -308,8 +312,7 @@ int pass(string out)
                 
                 if (rombanks != 0) {
                     // go ahead and set size of output
-                    char *fill_array = new char[rombanks*banksize];
-                    outs.write(fill_array, rombanks*banksize);
+                    rom.resize(rombanks*banksize);
                 }
             } else if (tokens[counter].token_i == "rombanks") {
                 // not sure about rombanks limit
@@ -317,8 +320,7 @@ int pass(string out)
                 
                 if (banksize != 0) {
                     // go ahead and set size of output
-                    char *fill_array = new char[rombanks*banksize];
-                    outs.write(fill_array, rombanks*banksize);
+                    rom.resize(rombanks*banksize);
                 }
             } else if (tokens[counter].token_i == "lorom") {
                 lohirom = lorom;
