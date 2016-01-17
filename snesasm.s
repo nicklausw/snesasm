@@ -4,9 +4,9 @@
 ; will uncomment as things begin to work.
 
 ; let's set up the rom.
-;.lorom
-;.banksize $8000
-;.rombanks 4
+.lorom
+.banksize $8000
+.rombanks 4
 
 ; header
 .compcheck ; checksum

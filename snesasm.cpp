@@ -24,6 +24,15 @@ using namespace std; // print
 #define success 0
 #define fail 1
 
+// default to lorom
+#define lorom 0
+#define hirom 1
+
+
+// current pass defines
+#define p1 0
+#define p2 1
+
 
 // function declarations
 void help(string prog_name); // help message
@@ -32,8 +41,7 @@ bool file_existent(string name); // file existence check
 void file_to_string(string file); // speaks for itself
 int lexer(); // the wonderful lexer magic
 int append_token(unsigned int counter, int current_token); // add token to string
-int pass_1(); // first pass: get directives, labels, defines
-int pass_2(); // second pass: calculate stuff, fix stuff, write to rom
+int pass(string out); // pass function
 int hint_next_token_type(unsigned int counter, string cur); // speaks for itself
 string hint_next_token_dat(unsigned int counter, string cur); // same
 int one_numeric_arg(string str, unsigned int counter, int range); // directives with one number arg
@@ -71,9 +79,16 @@ int romsize = 0;
 int carttype = 0;
 int licenseecode = 0;
 int version = 0;
+int lohirom = lorom;
+int rombanks = 0;
+long banksize = 0;
 
 // temporary transfer variable
 long tr = 0;
+
+
+// pass variable
+int cur_pass = p1;
 
 
 int main(int argc, char **argv)
@@ -107,8 +122,8 @@ int snesasm(string in, string out)
     
     file_to_string(in); // read file
     if (lexer() == fail) return fail; // lexer magic
-    if (pass_1() == fail) return fail; // pass 1
-    if (pass_2() == fail) return fail; // pass 2
+    if (pass(out) == fail) return fail; // pass 1
+    cur_pass = p2; if (pass(out) == fail) return fail; // pass 2
     
     return success;
 }
@@ -278,8 +293,14 @@ int append_token(unsigned int counter, int current_token)
     return counter;
 }
 
-int pass_1()
+int pass(string out)
 {
+    if (cur_pass == p2) {
+        // file stuff, yay
+        ofstream outs;
+        outs.open(out);
+    }
+    
     for (unsigned int counter = 0; counter < (tokens.size())/sizeof(token); counter++) {
         if (tokens[counter].token_type == tkDIR) {
             if (tokens[counter].token_i == "compcheck") {
@@ -294,6 +315,15 @@ int pass_1()
                 counter = one_numeric_arg("licenseecode", counter, r8); licenseecode = tr;
             } else if (tokens[counter].token_i == "version") {
                 counter = one_numeric_arg("version", counter, r8); version = tr;
+            } else if (tokens[counter].token_i == "banksize") {
+                counter = one_numeric_arg("banksize", counter, r16); banksize = tr;
+            } else if (tokens[counter].token_i == "rombanks") {
+                // not sure about rombanks limit
+                counter = one_numeric_arg("banksize", counter, rNONE); rombanks = tr;
+            } else if (tokens[counter].token_i == "lorom") {
+                lohirom = lorom;
+            } else if (tokens[counter].token_i == "hirom") {
+                lohirom = hirom;
             } else {
                 cout << "error: unknown directive \"" << tokens[counter].token_i << "\"\n";
                 return fail;
@@ -310,12 +340,6 @@ int pass_1()
         }
     }
     
-    return success;
-}
-
-
-int pass_2()
-{
     return success;
 }
 
@@ -351,8 +375,13 @@ int one_numeric_arg(string str, unsigned int counter, int range)
         tr = parse_num(hint_next_token_dat(counter, tokens[counter].token_i));
         
         if (range == r8) {
-            if (tr > 255 || tr < 0) {
+            if (tr > 0xFF) {
                 cerr << "error: " << str << " requires 8-bit args\n";
+                exit(fail);
+            }
+        } else if (range == r16) {
+            if (tr > 0xFFFF) {
+                cerr << "error: " << str << " requires 16-bit args\n";
                 exit(fail);
             }
         }
