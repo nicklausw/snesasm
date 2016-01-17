@@ -266,6 +266,7 @@ int pass_1()
                     return fail;
                 } else {
                     romsize = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+                    counter++;
                 }
             } else if (tokens[counter].token_i == "carttype") {
                 if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
@@ -273,6 +274,7 @@ int pass_1()
                     return fail;
                 } else {
                     carttype = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+                    counter++;
                 }
             } else if (tokens[counter].token_i == "licenseecode") {
                 if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
@@ -280,6 +282,7 @@ int pass_1()
                     return fail;
                 } else {
                     licenseecode = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+                    counter++;
                 }
             } else if (tokens[counter].token_i == "version") {
                 if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
@@ -287,11 +290,15 @@ int pass_1()
                     return fail;
                 } else {
                     version = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+                    counter++;
                 }
             } else {
                 cout << "error: unknown directive \"" << tokens[counter].token_i << "\"\n";
                 return fail;
             }
+        } else if (tokens[counter].token_type == tkNUM) {
+            cout << "error: loose num " << tokens[counter].token_i << '\n';
+            return fail;
         }
     }
     
