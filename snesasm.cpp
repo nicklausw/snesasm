@@ -226,6 +226,13 @@ int lexer()
         
         // no newline means do a token
         
+        if (ins[counter] == 0x0D) {
+            // CR LF
+            counter++;
+            continue;
+        }
+        
+        
         if (ins[counter] == '.') {
             // directive
             ct_used = true;
@@ -281,7 +288,7 @@ int lexer()
 
 int append_token(unsigned int counter, int current_token)
 {
-    while (ins[counter] != ' ' && ins[counter] != '\n') {
+    while (ins[counter] != ' ' && ins[counter] != '\n' && ins[counter] != 0x0D) {
                 if (counter == ins.length())
                     break; // no overflows please!
                 tokens[current_token].token_i.append(string(1, ins[counter]));
@@ -327,7 +334,7 @@ int pass()
             } else if (tokens[counter].token_i == "hirom") {
                 lohirom = hirom;
             } else {
-                cout << "error: unknown directive \"" << tokens[counter].token_i << "\"\n";
+                cout << "error: unknown directive " << tokens[counter].token_i << "\n";
                 return fail;
             }
         } else if (tokens[counter].token_type == tkNUM) {
@@ -337,7 +344,7 @@ int pass()
             cerr << "error: opcodes aren't implemented yet, sorry.\n";
             return fail;
         } else {
-            cerr << "error: unknown symbol \"" << tokens[counter].token_i << "\"\n";
+            cerr << "error: unknown symbol " << tokens[counter].token_i << "\n";
             return fail;
         }
     }
