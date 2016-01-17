@@ -29,6 +29,13 @@ using namespace std; // print
 #define hirom 1
 
 
+// token struct
+typedef struct {
+    int token_type; // type
+    string token_i; // internals
+} token;
+
+
 // function declarations
 void help(string prog_name); // help message
 int snesasm(string in, string out); // the true main function
@@ -37,18 +44,11 @@ void file_to_string(string file); // speaks for itself
 int lexer(); // the wonderful lexer magic
 int append_token(unsigned int counter, int current_token); // add token to string
 int pass(); // pass function
-int hint_next_token_type(unsigned int counter, string cur); // speaks for itself
-string hint_next_token_dat(unsigned int counter, string cur); // same
+token hint_next_token(unsigned int counter, string cur); // speaks for itself
 int one_numeric_arg(string str, unsigned int counter, int range); // directives with one number arg
 long parse_num(string num); // number parse
 string str_tolower(string str); // lower all caps in string
 
-
-// token struct
-typedef struct {
-    int token_type; // type
-    string token_i; // internals
-} token;
 
 // tokens vector
 vector<token> tokens;
@@ -58,6 +58,7 @@ int tkUNDEF = 0; // fail
 int tkNUM = 1; // number
 int tkDIR = 2; // directive
 int tkOP = 3; // opcode
+
 
 // ranges
 int rNONE = 0;
@@ -345,35 +346,24 @@ int pass()
 }
 
 
-int hint_next_token_type(unsigned int counter, string cur)
+token hint_next_token(unsigned int counter, string cur)
 {
     if (counter >= tokens.size()) {
         cerr << "error: " << cur << " requires args\n";
         exit(fail);
     }
     
-    return tokens[counter+1].token_type;
-}
-
-
-string hint_next_token_dat(unsigned int counter, string cur)
-{
-    if (counter >= tokens.size()) {
-        cerr << "error: " << cur << " requires args\n";
-        exit(fail);
-    }
-    
-    return tokens[counter+1].token_i;
+    return tokens[counter+1];
 }
 
 
 int one_numeric_arg(string str, unsigned int counter, int range)
 {
-    if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
+    if (hint_next_token(counter, tokens[counter].token_i).token_type != tkNUM) {
         cerr << "error: " << str << " expects numeric args\n";
         exit(fail);
     } else {
-        tr = parse_num(hint_next_token_dat(counter, tokens[counter].token_i));
+        tr = parse_num(hint_next_token(counter, tokens[counter].token_i).token_i);
         
         if (range == r8) {
             if (tr > 0xFF) {

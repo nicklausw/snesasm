@@ -1,2 +1,3 @@
-# cr lf for the win(dows).
-* text eol=crlf
+# apparently problems happen with
+# cr lf, so...
+* text eol=lf
