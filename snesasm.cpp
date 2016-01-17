@@ -78,6 +78,12 @@ int version = 0;
 int lohirom = lorom;
 int rombanks = 0;
 long banksize = 0;
+int cur_bank = 0;
+int base = 0x8000;
+
+// define switches
+bool rombanks_defined = false;
+bool banksize_defined = false; 
 
 // temporary transfer variable
 long tr = 0;
@@ -316,6 +322,7 @@ int pass()
                 counter = one_numeric_arg("version", counter, r8); version = tr;
             } else if (tokens[counter].token_i == "banksize") {
                 counter = one_numeric_arg("banksize", counter, r16); banksize = tr;
+                banksize_defined = true;
                 
                 if (rombanks != 0) {
                     // go ahead and set size of output
@@ -324,10 +331,28 @@ int pass()
             } else if (tokens[counter].token_i == "rombanks") {
                 // not sure about rombanks limit
                 counter = one_numeric_arg("rombanks", counter, rNONE); rombanks = tr;
+                rombanks_defined = true;
                 
                 if (banksize != 0) {
                     // go ahead and set size of output
                     rom.resize(rombanks*banksize);
+                }
+            } else if (tokens[counter].token_i == "bank") {
+                counter = one_numeric_arg("bank", counter, rNONE); cur_bank = tr;
+                
+                if (rombanks_defined == false) {
+                    cerr << "error: rombanks needs to be defined before .bank\n";
+                    return fail;
+                }
+                
+                if (banksize_defined == false) {
+                    cerr << "error: banksize needs to be defined before .bank\n";
+                    return fail;
+                }
+                
+                if (cur_bank >= rombanks) {
+                    cerr << "error: can't go to bank higher than maximum banks\n";
+                    return fail;
                 }
             } else if (tokens[counter].token_i == "lorom") {
                 lohirom = lorom;

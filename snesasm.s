@@ -18,7 +18,7 @@
 .version 1
 
 ; now the code
-;.bank 0
+.bank 0
 
 ;clc
 ;xce
