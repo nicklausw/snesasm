@@ -29,11 +29,6 @@ using namespace std; // print
 #define hirom 1
 
 
-// current pass defines
-#define p1 0
-#define p2 1
-
-
 // function declarations
 void help(string prog_name); // help message
 int snesasm(string in, string out); // the true main function
@@ -87,10 +82,6 @@ long banksize = 0;
 long tr = 0;
 
 
-// pass variable
-int cur_pass = p1;
-
-
 int main(int argc, char **argv)
 {
     // args!
@@ -122,8 +113,7 @@ int snesasm(string in, string out)
     
     file_to_string(in); // read file
     if (lexer() == fail) return fail; // lexer magic
-    if (pass(out) == fail) return fail; // pass 1
-    cur_pass = p2; if (pass(out) == fail) return fail; // pass 2
+    if (pass(out) == fail) return fail; // pass
     
     return success;
 }
@@ -295,11 +285,9 @@ int append_token(unsigned int counter, int current_token)
 
 int pass(string out)
 {
-    if (cur_pass == p2) {
-        // file stuff, yay
-        ofstream outs;
-        outs.open(out);
-    }
+    // file stuff, yay
+    ofstream outs;
+    outs.open(out);
     
     for (unsigned int counter = 0; counter < (tokens.size())/sizeof(token); counter++) {
         if (tokens[counter].token_type == tkDIR) {
@@ -317,9 +305,21 @@ int pass(string out)
                 counter = one_numeric_arg("version", counter, r8); version = tr;
             } else if (tokens[counter].token_i == "banksize") {
                 counter = one_numeric_arg("banksize", counter, r16); banksize = tr;
+                
+                if (rombanks != 0) {
+                    // go ahead and set size of output
+                    char *fill_array = new char[rombanks*banksize];
+                    outs.write(fill_array, rombanks*banksize);
+                }
             } else if (tokens[counter].token_i == "rombanks") {
                 // not sure about rombanks limit
-                counter = one_numeric_arg("banksize", counter, rNONE); rombanks = tr;
+                counter = one_numeric_arg("rombanks", counter, rNONE); rombanks = tr;
+                
+                if (banksize != 0) {
+                    // go ahead and set size of output
+                    char *fill_array = new char[rombanks*banksize];
+                    outs.write(fill_array, rombanks*banksize);
+                }
             } else if (tokens[counter].token_i == "lorom") {
                 lohirom = lorom;
             } else if (tokens[counter].token_i == "hirom") {
