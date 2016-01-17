@@ -381,13 +381,14 @@ int pass()
                 return fail;
             }
         } else if (tokens[counter].token_type == tkNUM) {
-            cerr << "error: loose num " << tokens[counter].token_i << '\n';
+            cerr << "error: loose num " << tokens[counter].token_i << "\n";
             return fail;
         } else if (tokens[counter].token_type == tkOP) {
             // opcode
+            int match_count = 0;
             for (unsigned int opcounter = 0; opcounter < sizeof(opcodes)/sizeof(opcode); opcounter++) {
                 if (tokens[counter].token_i == opcodes[opcounter].name) {
-                    cout << "we have a match\n";
+                    match_count++;
                 } else continue;
                 
                 // it's a match
@@ -396,6 +397,12 @@ int pass()
                     cerr << "error: no-arg opcodes only for now.\n";
                 }
                 write_byte(opcodes[opcounter].byte);
+            }
+            
+            if (!match_count) {
+                // no matches
+                cerr << "error: unknown opcode " << tokens[counter].token_i << "\n";
+                return fail;
             }
         } else {
             cerr << "error: unknown symbol " << tokens[counter].token_i << "\n";
