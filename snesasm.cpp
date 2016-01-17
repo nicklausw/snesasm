@@ -325,8 +325,8 @@ int one_numeric_arg(string str, unsigned int counter)
         cout << "error: " << str << " expects numeric args\n";
         exit(fail);
     } else {
-		string out_hint = hint_next_token_dat(counter, tokens[counter].token_i);
-		tr = atoi(out_hint.c_str());
+        string out_hint = hint_next_token_dat(counter, tokens[counter].token_i);
+        tr = atoi(out_hint.c_str());
         counter++;
     }
     
