@@ -48,6 +48,7 @@ token hint_next_token(unsigned int counter, string cur); // speaks for itself
 int one_numeric_arg(string str, unsigned int counter, int range); // directives with one number arg
 long parse_num(string num); // number parse
 string str_tolower(string str); // lower all caps in string
+void write_byte(unsigned char byte); // write byte to rom
 
 
 // tokens vector
@@ -80,6 +81,7 @@ int rombanks = 0;
 long banksize = 0;
 int cur_bank = 0;
 int base = 0x8000;
+long org = 0x8000;
 
 // define switches
 bool rombanks_defined = false;
@@ -91,6 +93,22 @@ long tr = 0;
 
 // the rom vector
 vector<char> rom;
+
+
+// opcode struct
+// only works with no-args
+typedef struct {
+    string name;
+    unsigned char byte;
+    bool no_arg;
+} opcode;
+
+
+// opcode list
+opcode opcodes[] = {
+    {"xce", 0xFB, true},
+    {"clc", 0x18, true}
+};
 
 
 int main(int argc, char **argv)
@@ -343,9 +361,7 @@ int pass()
                 if (rombanks_defined == false) {
                     cerr << "error: rombanks needs to be defined before .bank\n";
                     return fail;
-                }
-                
-                if (banksize_defined == false) {
+                } else if (banksize_defined == false) {
                     cerr << "error: banksize needs to be defined before .bank\n";
                     return fail;
                 }
@@ -353,6 +369,8 @@ int pass()
                 if (cur_bank >= rombanks) {
                     cerr << "error: can't go to bank higher than maximum banks\n";
                     return fail;
+                } else {
+                    org = (banksize*cur_bank)+base;
                 }
             } else if (tokens[counter].token_i == "lorom") {
                 lohirom = lorom;
@@ -366,8 +384,19 @@ int pass()
             cerr << "error: loose num " << tokens[counter].token_i << '\n';
             return fail;
         } else if (tokens[counter].token_type == tkOP) {
-            cerr << "error: opcodes aren't implemented yet, sorry.\n";
-            return fail;
+            // opcode
+            for (unsigned int opcounter = 0; opcounter < sizeof(opcodes)/sizeof(opcode); opcounter++) {
+                if (tokens[counter].token_i == opcodes[opcounter].name) {
+                    cout << "we have a match\n";
+                } else continue;
+                
+                // it's a match
+                // ...but it has to have no args for now.
+                if (opcodes[opcounter].no_arg == false) {
+                    cerr << "error: no-arg opcodes only for now.\n";
+                }
+                write_byte(opcodes[opcounter].byte);
+            }
         } else {
             cerr << "error: unknown symbol " << tokens[counter].token_i << "\n";
             return fail;
@@ -475,3 +504,12 @@ string str_tolower(string str)
     
     return str;
 }
+
+
+void write_byte(unsigned char byte)
+{
+    // the surprisingly simplest function of all!
+    rom[org-base] = byte;
+    org++;
+}
+
