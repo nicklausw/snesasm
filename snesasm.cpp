@@ -36,7 +36,7 @@ int pass_1(); // first pass: get directives, labels, defines
 int pass_2(); // second pass: calculate stuff, fix stuff, write to rom
 int hint_next_token_type(unsigned int counter, string cur); // speaks for itself
 string hint_next_token_dat(unsigned int counter, string cur); // same
-int one_numeric_arg(string str, unsigned int counter); // directives with one number arg
+int one_numeric_arg(string str, unsigned int counter, int range); // directives with one number arg
 long parse_num(string num); // number parse
 string str_tolower(string str); // lower all caps in string
 
@@ -55,6 +55,12 @@ int tkUNDEF = 0; // fail
 int tkNUM = 1; // number
 int tkDIR = 2; // directive
 int tkOP = 3; // opcode
+
+// ranges
+int rNONE = 0;
+int r8 = 1;
+int r16 = 2;
+int r24 = 3;
 
 string ins; // universal file string
 
@@ -281,13 +287,13 @@ int pass_1()
             } else if (tokens[counter].token_i == "autoromsize") {
                 autoromsize_flag = true;
             } else if (tokens[counter].token_i == "romsize") {
-                counter = one_numeric_arg("romsize", counter); romsize = tr;
+                counter = one_numeric_arg("romsize", counter, r8); romsize = tr;
             } else if (tokens[counter].token_i == "carttype") {
-                counter = one_numeric_arg("carttype", counter); carttype = tr;
+                counter = one_numeric_arg("carttype", counter, r8); carttype = tr;
             } else if (tokens[counter].token_i == "licenseecode") {
-                counter = one_numeric_arg("licenseecode", counter); licenseecode = tr;
+                counter = one_numeric_arg("licenseecode", counter, r8); licenseecode = tr;
             } else if (tokens[counter].token_i == "version") {
-                counter = one_numeric_arg("version", counter); version = tr;
+                counter = one_numeric_arg("version", counter, r8); version = tr;
             } else {
                 cout << "error: unknown directive \"" << tokens[counter].token_i << "\"\n";
                 return fail;
@@ -336,13 +342,21 @@ string hint_next_token_dat(unsigned int counter, string cur)
 }
 
 
-int one_numeric_arg(string str, unsigned int counter)
+int one_numeric_arg(string str, unsigned int counter, int range)
 {
     if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
         cerr << "error: " << str << " expects numeric args\n";
         exit(fail);
     } else {
         tr = parse_num(hint_next_token_dat(counter, tokens[counter].token_i));
+        
+        if (range == r8) {
+            if (tr > 255 || tr < 0) {
+                cerr << "error: " << str << " requires 8-bit args\n";
+                exit(fail);
+            }
+        }
+        
         counter++;
     }
     
