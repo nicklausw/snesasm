@@ -16,6 +16,7 @@ enjoy. */
 #include <sstream> // file streams
 #include <vector> // vectors
 #include <cctype> // char checks
+#include <cstdlib> // exit
 using namespace std; // print
 
 
@@ -33,6 +34,8 @@ int lexer(); // the wonderful lexer magic
 int append_token(unsigned int counter, int current_token); // add token to string
 int pass_1(); // first pass: get directives, labels, defines
 int pass_2(); // second pass: calculate stuff, fix stuff, write to rom
+int hint_next_token_type(unsigned int counter, string cur); // speaks for itself
+string hint_next_token_dat(unsigned int counter, string cur); // same
 
 
 // token struct
@@ -252,13 +255,42 @@ int append_token(unsigned int counter, int current_token)
 int pass_1()
 {
     for (unsigned int counter = 0; counter < (tokens.size())/sizeof(token); counter++) {
-        cout << tokens[counter].token_type << ": " << tokens[counter].token_i << '\n';
-        
         if (tokens[counter].token_type == tkDIR) {
             if (tokens[counter].token_i == "compcheck") {
                 compcheck_flag = true;
             } else if (tokens[counter].token_i == "autoromsize") {
                 autoromsize_flag = true;
+            } else if (tokens[counter].token_i == "romsize") {
+                if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
+                    cout << "error: romsize expects numeric args\n";
+                    return fail;
+                } else {
+                    romsize = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+                }
+            } else if (tokens[counter].token_i == "carttype") {
+                if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
+                    cout << "error: carttype expects numeric args\n";
+                    return fail;
+                } else {
+                    carttype = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+                }
+            } else if (tokens[counter].token_i == "licenseecode") {
+                if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
+                    cout << "error: licenseecode expects numeric args\n";
+                    return fail;
+                } else {
+                    licenseecode = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+                }
+            } else if (tokens[counter].token_i == "version") {
+                if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
+                    cout << "error: version expects numeric args\n";
+                    return fail;
+                } else {
+                    version = stoi(hint_next_token_dat(counter, tokens[counter].token_i));
+                }
+            } else {
+                cout << "error: unknown directive \"" << tokens[counter].token_i << "\"\n";
+                return fail;
             }
         }
     }
@@ -270,4 +302,26 @@ int pass_1()
 int pass_2()
 {
     return success;
+}
+
+
+int hint_next_token_type(unsigned int counter, string cur)
+{
+    if (counter >= tokens.size()) {
+        cout << "error: " << cur << " requires args\n";
+        exit(fail);
+    }
+    
+    return tokens[counter+1].token_type;
+}
+
+
+string hint_next_token_dat(unsigned int counter, string cur)
+{
+    if (counter >= tokens.size()) {
+        cout << "error: " << cur << " requires args\n";
+        exit(fail);
+    }
+    
+    return tokens[counter+1].token_i;
 }
