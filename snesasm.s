@@ -20,5 +20,5 @@
 ; now the code
 ;.bank 0
 
-clc
-xce
+;clc
+;xce

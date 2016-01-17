@@ -52,8 +52,7 @@ vector<token> tokens;
 int tkUNDEF = 0; // fail
 int tkNUM = 1; // number
 int tkDIR = 2; // directive
-int tkLB = 3; // label
-int tkOP = 4; // opcode
+int tkOP = 3; // opcode
 
 string ins; // universal file string
 
@@ -64,6 +63,8 @@ int romsize = 0;
 int carttype = 0;
 int licenseecode = 0;
 int version = 0;
+
+// temporary transfer variable
 int tr = 0;
 
 
@@ -276,6 +277,12 @@ int pass_1()
             }
         } else if (tokens[counter].token_type == tkNUM) {
             cout << "error: loose num " << tokens[counter].token_i << '\n';
+            return fail;
+        } else if (tokens[counter].token_type == tkOP) {
+            cout << "error: opcodes aren't implemented yet, sorry.\n";
+            return fail;
+        } else {
+            cout << "error: unknown symbol \"" << tokens[counter].token_i << "\"\n";
             return fail;
         }
     }
