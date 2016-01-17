@@ -37,6 +37,7 @@ int pass_2(); // second pass: calculate stuff, fix stuff, write to rom
 int hint_next_token_type(unsigned int counter, string cur); // speaks for itself
 string hint_next_token_dat(unsigned int counter, string cur); // same
 int one_numeric_arg(string str, unsigned int counter); // directives with one number arg
+long parse_num(string num); // number parse
 
 
 // token struct
@@ -65,7 +66,7 @@ int licenseecode = 0;
 int version = 0;
 
 // temporary transfer variable
-int tr = 0;
+long tr = 0;
 
 
 int main(int argc, char **argv)
@@ -184,7 +185,7 @@ int lexer()
     tokens.resize(1);
     
     
-    while (counter <= ins.length()) {
+    while (counter < ins.length()) {
         // handle newlines
         if (ins[counter] == '\n' || ins[counter] == ' ') {
             if (ct_used == false) {
@@ -224,10 +225,19 @@ int lexer()
             
             // no need for a counter++ here, it's handled above.
             continue;
-        } else if (isdigit(ins[counter])) {
+        } else if (isdigit(ins[counter]) || ins[counter] == '$' || ins[counter] == '%') {
             // number
             ct_used = true;
             tokens[current_token].token_type = tkNUM;
+            
+            counter = append_token(counter, current_token);
+            
+            // no need for a counter++ here, it's handled above.
+            continue;
+        } else {
+            // unknown
+            ct_used = true;
+            tokens[current_token].token_type = tkUNDEF;
             
             counter = append_token(counter, current_token);
             
@@ -276,13 +286,13 @@ int pass_1()
                 return fail;
             }
         } else if (tokens[counter].token_type == tkNUM) {
-            cout << "error: loose num " << tokens[counter].token_i << '\n';
+            cerr << "error: loose num " << tokens[counter].token_i << '\n';
             return fail;
         } else if (tokens[counter].token_type == tkOP) {
-            cout << "error: opcodes aren't implemented yet, sorry.\n";
+            cerr << "error: opcodes aren't implemented yet, sorry.\n";
             return fail;
         } else {
-            cout << "error: unknown symbol \"" << tokens[counter].token_i << "\"\n";
+            cerr << "error: unknown symbol \"" << tokens[counter].token_i << "\"\n";
             return fail;
         }
     }
@@ -300,7 +310,7 @@ int pass_2()
 int hint_next_token_type(unsigned int counter, string cur)
 {
     if (counter >= tokens.size()) {
-        cout << "error: " << cur << " requires args\n";
+        cerr << "error: " << cur << " requires args\n";
         exit(fail);
     }
     
@@ -311,7 +321,7 @@ int hint_next_token_type(unsigned int counter, string cur)
 string hint_next_token_dat(unsigned int counter, string cur)
 {
     if (counter >= tokens.size()) {
-        cout << "error: " << cur << " requires args\n";
+        cerr << "error: " << cur << " requires args\n";
         exit(fail);
     }
     
@@ -322,13 +332,36 @@ string hint_next_token_dat(unsigned int counter, string cur)
 int one_numeric_arg(string str, unsigned int counter)
 {
     if (hint_next_token_type(counter, tokens[counter].token_i) != tkNUM) {
-        cout << "error: " << str << " expects numeric args\n";
+        cerr << "error: " << str << " expects numeric args\n";
         exit(fail);
     } else {
-        string out_hint = hint_next_token_dat(counter, tokens[counter].token_i);
-        tr = atoi(out_hint.c_str());
+        tr = parse_num(hint_next_token_dat(counter, tokens[counter].token_i));
         counter++;
     }
     
     return counter;
+}
+
+
+long parse_num(string num)
+{
+    string without_sym = num; // declare without symbol
+    
+    // make 'without symbol' true
+    if (!isdigit(without_sym[0])) {
+        without_sym.erase(without_sym.begin());
+    }
+    
+    char *chararray = const_cast<char*>(without_sym.c_str()); // turn without_sym into char array
+    
+    switch (num[0]) {
+        case '%':
+            // binary
+            return strtol(chararray, &chararray, 2);
+        case '$':
+            // hex
+            return strtol(chararray, &chararray, 16);
+    }
+    
+    return strtol(chararray, &chararray, 10);
 }
