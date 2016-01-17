@@ -38,6 +38,7 @@ int hint_next_token_type(unsigned int counter, string cur); // speaks for itself
 string hint_next_token_dat(unsigned int counter, string cur); // same
 int one_numeric_arg(string str, unsigned int counter); // directives with one number arg
 long parse_num(string num); // number parse
+string str_tolower(string str); // lower all caps in string
 
 
 // token struct
@@ -214,6 +215,9 @@ int lexer()
             
             counter = append_token(counter, current_token);
             
+            // no case sensitivity
+            tokens[current_token].token_i = str_tolower(tokens[current_token].token_i);
+            
             // no need for a counter++ here, it's handled above.
             continue;
         } else if (isalpha(ins[counter])) {
@@ -231,6 +235,9 @@ int lexer()
             tokens[current_token].token_type = tkNUM;
             
             counter = append_token(counter, current_token);
+            
+            // no case sensitivity
+            tokens[current_token].token_i = str_tolower(tokens[current_token].token_i);
             
             // no need for a counter++ here, it's handled above.
             continue;
@@ -353,7 +360,7 @@ long parse_num(string num)
     }
     
     // check for invalid symbols
-    for (unsigned int checkn = 0; checkn <= without_sym.length(); checkn++) {
+    for (unsigned int checkn = 0; checkn < without_sym.length(); checkn++) {
         if (isdigit(without_sym[checkn])) continue;
         
         // not a digit...
@@ -389,4 +396,16 @@ long parse_num(string num)
     }
     
     return strtol(chararray, &chararray, 10);
+}
+
+
+string str_tolower(string str)
+{ 
+    for (unsigned int counter = 0; counter < str.length(); counter++) {
+        if (isalpha(str[counter])) {
+            str[counter] = tolower(str[counter]);
+        }
+    }
+    
+    return str;
 }
