@@ -352,6 +352,31 @@ long parse_num(string num)
         without_sym.erase(without_sym.begin());
     }
     
+    // check for invalid symbols
+    for (unsigned int checkn = 0; checkn <= without_sym.length(); checkn++) {
+        if (isdigit(without_sym[checkn])) continue;
+        
+        // not a digit...
+        if (num[0] != '$') {
+            cerr << "error: invalid symbol in number\n";
+            exit(fail);
+        } else {
+            switch (without_sym[checkn]) {
+                case 'a': continue;
+                case 'b': continue;
+                case 'c': continue;
+                case 'd': continue;
+                case 'e': continue;
+                case 'f': continue;
+                default:
+                    // invalid symbol
+                    cerr << "error: invalid symbol in number\n";
+                    exit(fail);
+            }
+        }
+    }
+    
+    
     char *chararray = const_cast<char*>(without_sym.c_str()); // turn without_sym into char array
     
     switch (num[0]) {
