@@ -26,9 +26,13 @@ reset:
 clc
 xce
 
+; to do: forward calling labels
+;.db bla
+;bla:
+
 .org $fffd ; emu reset vector
-; to do, turn this into a proper
-; label for start of code!
-.dw reset
+.dw reset ; labels!
+
+
 
 ; the end?
