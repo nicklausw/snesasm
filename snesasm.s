@@ -23,12 +23,17 @@
 
 reset:
 
+; the assembler default to this
+; but might as well give clarity
+.org $8000
+
 clc
 xce
 
-; to do: forward calling labels
-;.db bla
-;bla:
+; forward calling labels is kinda
+; done? just for db and dw
+.dw bla
+bla:
 
 .org $fffd ; emu reset vector
 .dw reset ; labels!

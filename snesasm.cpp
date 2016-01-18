@@ -54,6 +54,8 @@ long parse_num(string num); // number parse
 string str_tolower(string str); // lower all caps in string
 void write_byte(unsigned char byte); // write byte to rom
 void new_label(string name, long val); // add a new label
+void new_unsolved(string name, long loc, int type); // add a new unsolved label
+int solve_unsolveds(); // solve previously unsolved stuff
 void snes(); // do snes opcodes!
 
 
@@ -65,6 +67,7 @@ int tkUNDEF = 0; // fail
 int tkNUM = 1; // number
 int tkDIR = 2; // directive
 int tkOP = 3; // opcode
+int tkLB = 4; // label
 
 
 // ranges
@@ -109,6 +112,20 @@ typedef struct {
 
 vector<label> labels;
 int label_count = 0;
+
+
+// the unsolved struct
+typedef struct {
+    string name;
+    long loc;
+    int type;
+} unsolved;
+
+vector<unsolved> unsolveds;
+
+// unsolved types
+int tDB = 0;
+int tDW = 1;
 
 
 // opcode struct
@@ -159,7 +176,7 @@ int snesasm(string in, string out)
     file_to_string(in); // read file
     if (lexer() == fail) return fail; // lexer magic
     if (pass() == fail) return fail; // pass
-    
+    if (solve_unsolveds() == fail) return fail; // solve unknown labels
     snes();
     
     ofstream outs(out);
@@ -295,6 +312,9 @@ int lexer()
             
             counter = append_token(counter, current_token);
             
+            if (tokens[current_token].token_i[tokens[current_token].token_i.length() - 1] == ':')
+                tokens[current_token].token_type = tkLB; // it's a label
+            
             // no need for a counter++ here, it's handled above.
             continue;
         } else if (isdigit(ins[counter]) || ins[counter] == '$' || ins[counter] == '%') {
@@ -399,11 +419,13 @@ int pass()
                     org = (banksize*cur_bank)+base;
                 }
             } else if (tokens[counter].token_i == "db") {
-                while (hint_next_token(counter, "db").token_type == tkNUM) {
+                while (hint_next_token(counter, "db").token_type == tkNUM ||
+                       hint_next_token(counter, "dw").token_type == tkOP) {
                     counter = numeric_arg("db", counter, r8); write_byte(tr & 0xFF);
                 }
             } else if (tokens[counter].token_i == "dw") {
-                while (hint_next_token(counter, "dw").token_type != tkUNDEF) {
+                while (hint_next_token(counter, "dw").token_type == tkNUM ||
+                       hint_next_token(counter, "dw").token_type == tkOP) {
                     counter = numeric_arg("dw", counter, r16);
                     write_byte(tr >> 8);
                     write_byte(tr & 0xFF);
@@ -441,15 +463,12 @@ int pass()
             
             if (!match_count) {
                 // no matches
-                // is it a label?
-                if (tokens[counter].token_i[tokens[counter].token_i.size() - 1] == ':') {
-                    tokens[counter].token_i.pop_back();
-                    new_label(tokens[counter].token_i, org);
-                } else {
-                    cerr << "error: unknown opcode " << tokens[counter].token_i << "\n";
-                    return fail;
-                }
+                cerr << "error: unknown opcode " << tokens[counter].token_i << "\n";
+                return fail;
             }
+        } else if (tokens[counter].token_type == tkLB) {
+            tokens[counter].token_i.pop_back();
+            new_label(tokens[counter].token_i, org);
         } else {
             cerr << "error: unknown symbol " << tokens[counter].token_i << "\n";
             return fail;
@@ -482,14 +501,15 @@ int numeric_arg(string str, unsigned int counter, int range)
         for (label_search = 0; label_search < labels.size(); label_search++) { // look for a label!
             if (labels[label_search].name == tokens[counter].token_i) {
                 tr = labels[label_search].val; // it's a match!
-                label_count++; // no need for error.
+                label_count++; // no need for unsolved.
                 break;
             }
         }
         
         if (!label_count) { // if no match was found
-            cerr << "error: no such label " << tokens[counter].token_i << "\n";
-            exit(fail);
+            // time for an unsolved!
+            new_unsolved(tokens[counter].token_i, org, range-1);
+            return counter;
         }
     } else if (tokens[counter].token_type == tkNUM) {
         tr = parse_num(tokens[counter].token_i);
@@ -586,6 +606,57 @@ void write_byte(unsigned char byte)
 void new_label(string name, long val)
 {
     labels.push_back({name, val});
+}
+
+
+void new_unsolved(string name, long loc, int type)
+{
+    unsolveds.push_back({name, loc, type});
+}
+
+
+int solve_unsolveds()
+{
+    unsigned int label_search = 0;
+    int match_num = 0;
+    
+    for (unsigned int counter = 0; counter < unsolveds.size(); counter++) {
+        match_num = 0;
+        
+        for (label_search = 0; label_search < labels.size(); label_search++) {
+            if (labels[label_search].name == unsolveds[counter].name) {
+                // a match!
+                match_num++;
+                if (unsolveds[counter].type == tDB) {
+                    if (labels[label_search].val > 0xFF) {
+                        // too big!
+                        cerr << "error: db requires 8-bit args\n";
+                        return fail;
+                    }
+                    
+                    org = unsolveds[counter].loc;
+                    write_byte(labels[label_search].val);
+                } else if (unsolveds[counter].type == tDW) {
+                    if (labels[label_search].val > 0xFFFF) {
+                        // too big!
+                        cerr << "error: dw requires 16-bit args\n";
+                        return fail;
+                    }
+                    
+                    org = unsolveds[counter].loc;
+                    write_byte(labels[label_search].val >> 8);
+                    write_byte(labels[label_search].val & 0xFF);
+                }
+            }
+        }
+        
+        if (!match_num) {
+            cerr << "error: no such label " << unsolveds[counter].name << '\n';
+            return fail;
+        }
+    }
+    
+    return success;
 }
 
 
