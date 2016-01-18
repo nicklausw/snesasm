@@ -476,9 +476,11 @@ int numeric_arg(string str, unsigned int counter, int range)
     unsigned int label_search;
     int label_count = 0;
     
-    if (hint_next_token(counter, tokens[counter].token_i).token_type == tkOP) { // if it's not number
+    counter++;
+    
+    if (tokens[counter].token_type == tkOP) { // if it's not number
         for (label_search = 0; label_search < labels.size(); label_search++) { // look for a label!
-            if (labels[label_search].name == hint_next_token(counter, tokens[counter].token_i).token_i) {
+            if (labels[label_search].name == tokens[counter].token_i) {
                 tr = labels[label_search].val; // it's a match!
                 label_count++; // no need for error.
                 break;
@@ -486,11 +488,11 @@ int numeric_arg(string str, unsigned int counter, int range)
         }
         
         if (!label_count) { // if no match was found
-            cerr << "error: no such label " << hint_next_token(counter, tokens[counter].token_i).token_i << "\n";
+            cerr << "error: no such label " << tokens[counter].token_i << "\n";
             exit(fail);
         }
-    } else if (hint_next_token(counter, tokens[counter].token_i).token_type == tkNUM) {
-        tr = parse_num(hint_next_token(counter, tokens[counter].token_i).token_i);
+    } else if (tokens[counter].token_type == tkNUM) {
+        tr = parse_num(tokens[counter].token_i);
     } else {
         cerr << "error: " << str << " expects numeric args\n";
         exit(fail);
@@ -508,8 +510,6 @@ int numeric_arg(string str, unsigned int counter, int range)
             exit(fail);
         }
     }
-        
-    counter++;
     
     return counter;
 }
