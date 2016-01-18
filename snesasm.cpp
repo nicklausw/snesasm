@@ -526,9 +526,15 @@ int pass()
                     // it's a literal!
                     next_tok.token_i.erase(0, 1);
                     if (opcodes[opcounter].lit == true) {
-                        write_byte(opcodes[opcounter].lit_b);
-                        write_byte(parse_num(next_tok.token_i));
-                        counter++; continue;
+                        if (parse_num(next_tok.token_i) < 256) {
+                            // in range
+                            write_byte(opcodes[opcounter].lit_b);
+                            write_byte(parse_num(next_tok.token_i));
+                            counter++; continue;
+                        } else {
+                            cerr << "error: opcode " << opcodes[opcounter].name << " takes 8-bit literals\n";
+                            return fail;
+                        }
                     } else {
                         // this thing doesn't like literals!?
                         cerr << "error: opcode " << opcodes[opcounter].name << " doesn't take literals\n";
