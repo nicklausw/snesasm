@@ -55,6 +55,8 @@ string str_tolower(string str); // lower all caps in string
 void write_byte(unsigned char byte); // write byte to rom
 void new_label(string name, long val); // add a new label
 void new_unsolved(string name, long loc, int type); // add a new unsolved label
+void new_unsolved_opcode(string name, long loc, int type, // add a new unsolved opcode?
+                         unsigned char byte, unsigned char b8, unsigned char b16, unsigned char b24);
 int solve_unsolveds(); // solve previously unsolved stuff
 void snes(); // do snes opcodes!
 
@@ -77,6 +79,7 @@ int rNONE = 0;
 int r8 = 1;
 int r16 = 2;
 int r24 = 3;
+int rOP = 6;
 
 string ins; // universal file string
 
@@ -121,6 +124,11 @@ typedef struct {
     string name;
     long loc;
     int type;
+    bool opcode;
+    unsigned char byte;
+    unsigned char b8;
+    unsigned char b16;
+    unsigned char b24;
 } unsolved;
 
 vector<unsolved> unsolveds;
@@ -128,6 +136,7 @@ vector<unsolved> unsolveds;
 // unsolved types
 int tDB = 0;
 int tDW = 1;
+int tOP = 5;
 
 
 // opcode struct
@@ -497,19 +506,72 @@ int pass()
         } else if (tokens[counter].token_type == tkOP) {
             // opcode
             int match_count = 0;
+            token next_tok = hint_next_token(counter, "arg check");
+            
             for (unsigned int opcounter = 0; opcounter < sizeof(opcodes)/sizeof(opcode); opcounter++) {
                 if (tokens[counter].token_i == opcodes[opcounter].name) {
                     match_count++;
                 } else continue;
                 
                 // it's a match
-                if (hint_next_token(counter, "arg check").token_type == tkNL) {
+                if (next_tok.token_type == tkNL) {
                     if (opcodes[opcounter].no_arg == true) {
                         write_byte(opcodes[opcounter].no_arg_b);
                         continue;
                     } else {
-                        cerr << "error: opcode " << opcodes[opcounter].name << " requires args\n";
+                        cerr << "error: opcode " << opcodes[opcounter].name << " expects args\n";
                         return fail;
+                    }
+                } else if (next_tok.token_i[0] == '#') {
+                    // it's a literal!
+                    next_tok.token_i.erase(0, 1);
+                    if (opcodes[opcounter].lit == true) {
+                        write_byte(opcodes[opcounter].lit_b);
+                        write_byte(parse_num(next_tok.token_i));
+                        counter++; continue;
+                    } else {
+                        // this thing doesn't like literals!?
+                        cerr << "error: opcode " << opcodes[opcounter].name << " doesn't take literals\n";
+                        return fail;
+                    }
+                } else if (next_tok.token_type == tkNUM) {
+                    // it's a number!
+                    // this could go multiple ways. for now we'll only
+                    // do the one-arg way.
+                    
+                    if (parse_num(next_tok.token_i) < 256) {
+                        // 8-bit!
+                        if (opcodes[opcounter].x8 == true) {
+                            write_byte(opcodes[opcounter].x8_b);
+                            write_byte(parse_num(next_tok.token_i));
+                            counter++; continue;
+                        } else {
+                            cerr << "error: opcode" << opcodes[opcounter].name << " can't take 8-bit args\n";
+                            return fail; 
+                        }
+                    } else if (parse_num(next_tok.token_i) < 65536) {
+                        // 16-bit!
+                        if (opcodes[opcounter].x16 == true) {
+                            write_byte(opcodes[opcounter].x16_b);
+                            write_byte(parse_num(next_tok.token_i) & 0xFF);
+                            write_byte(parse_num(next_tok.token_i) >> 8);
+                            counter++; continue;
+                        } else {
+                            cerr << "error: opcode" << opcodes[opcounter].name << " can't take 16-bit args\n";
+                            return fail; 
+                        }
+                    } else if (parse_num(next_tok.token_i) < 0xFFFFFF+1) {
+                        // 24-bit!
+                        if (opcodes[opcounter].x24 == true) {
+                            write_byte(opcodes[opcounter].x24_b);
+                            write_byte(parse_num(next_tok.token_i) & 0xFF);
+                            write_byte((parse_num(next_tok.token_i) >> 8) & 0xFF); // crazy middle byte
+                            write_byte(parse_num(next_tok.token_i) >> 16);
+                            counter++; continue;
+                        } else {
+                            cerr << "error: opcode" << opcodes[opcounter].name << " can't take 24-bit args\n";
+                            return fail; 
+                        }
                     }
                 }
             }
@@ -537,7 +599,7 @@ int pass()
 token hint_next_token(unsigned int counter, string cur)
 {
     if (counter >= tokens.size()) {
-        cerr << "error: " << cur << " requires args\n";
+        cerr << "error: " << cur << " expects args\n";
         exit(fail);
     }
     
@@ -569,7 +631,7 @@ int numeric_arg(string str, unsigned int counter, int range)
     } else if (tokens[counter].token_type == tkNUM) {
         tr = parse_num(tokens[counter].token_i);
     } else {
-        cerr << "error: " << str << " expects numeric args\n";
+        cerr << "error: " << str << " expects args\n";
         exit(fail);
     }
      
@@ -678,7 +740,15 @@ void new_label(string name, long val)
 
 void new_unsolved(string name, long loc, int type)
 {
-    unsolveds.push_back({name, loc, type});
+    unsolveds.push_back({name, loc, type, false, 0, 0, 0, 0});
+}
+
+
+void new_unsolved_opcode(string name, long loc, int type,
+                         unsigned char byte, unsigned char b8, unsigned char b16, unsigned char b24)
+{
+    unsolveds.push_back({name, loc, type, true, byte, b8, b16, b24});
+    return;
 }
 
 

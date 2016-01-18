@@ -32,7 +32,10 @@ reset: clc
 xce
 
 ; opcode args
-;adc #$34
+adc #$12
+adc $12
+adc $1234
+adc $123456
 
 ; forward calling labels is kinda
 ; done? just for db and dw
