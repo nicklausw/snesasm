@@ -172,7 +172,7 @@ void file_to_string(string file)
     string str; // temporary build-up string
     char in_c; // char for comparison
     unsigned int counter = 0; // basic counter
-    
+
     // clear ins
     ins.clear();
     
@@ -191,7 +191,7 @@ void file_to_string(string file)
     // simplify multiple spaces to one space
     ins.clear();
     
-    while (counter <= str.length()) {
+    while (counter < str.length()) {
         if (str[counter] == ' ') {
             ins.append(" ");
             while (str[counter] == ' ') {
@@ -209,7 +209,7 @@ void file_to_string(string file)
     ins.clear();
     counter = 0;
     
-    while (counter <= str.length()) {
+    while (counter < str.length()) {
         if (str[counter] == ';') {
             ins.append("\n");
             while (str[counter] != '\n') {
@@ -320,19 +320,25 @@ int lexer()
 
 int append_token(unsigned int counter, int current_token)
 {
+    unsigned int str_length = ins.length() - 1;
+    
     while (ins[counter] != ' ' && ins[counter] != '\n' && ins[counter] != 0x0D) {
-                if (counter == ins.length())
-                    break; // no overflows please!
-                tokens[current_token].token_i.append(string(1, ins[counter]));
-                counter++;
+        if (counter == str_length) {
+            counter++;
+            break; // no overflows please!
+        }
+        
+        tokens[current_token].token_i.append(string(1, ins[counter]));
+        counter++;
     }
     
     return counter;
 }
 
+
 int pass()
 {    
-    for (unsigned int counter = 0; counter < (tokens.size())/sizeof(token); counter++) {
+    for (unsigned int counter = 0; counter <= (tokens.size())/sizeof(token); counter++) {
         if (tokens[counter].token_type == tkDIR) {
             if (tokens[counter].token_i == "compcheck") {
                 compcheck_flag = true;
