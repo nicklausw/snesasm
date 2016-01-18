@@ -53,6 +53,7 @@ int numeric_arg(string str, unsigned int counter, int range); // directives with
 long parse_num(string num); // number parse
 string str_tolower(string str); // lower all caps in string
 void write_byte(unsigned char byte); // write byte to rom
+void new_label(string name, long val); // add a new label
 void snes(); // do snes opcodes!
 
 
@@ -99,6 +100,15 @@ long tr = 0;
 
 // the rom vector
 vector<unsigned char> rom;
+
+// the labels struct
+typedef struct {
+    string name;
+    long val;
+} label;
+
+vector<label> labels;
+int label_count = 0;
 
 
 // opcode struct
@@ -392,6 +402,12 @@ int pass()
                 while (hint_next_token(counter, "db").token_type == tkNUM) {
                     counter = numeric_arg("db", counter, r8); write_byte(tr & 0xFF);
                 }
+            } else if (tokens[counter].token_i == "dw") {
+                while (hint_next_token(counter, "dw").token_type != tkUNDEF) {
+                    counter = numeric_arg("dw", counter, r16);
+                    write_byte(tr >> 8);
+                    write_byte(tr & 0xFF);
+                }
             } else if (tokens[counter].token_i == "lorom") {
                 lohirom = lorom;
             } else if (tokens[counter].token_i == "hirom") {
@@ -425,8 +441,14 @@ int pass()
             
             if (!match_count) {
                 // no matches
-                cerr << "error: unknown opcode " << tokens[counter].token_i << "\n";
-                return fail;
+                // is it a label?
+                if (tokens[counter].token_i[tokens[counter].token_i.size() - 1] == ':') {
+                    tokens[counter].token_i.pop_back();
+                    new_label(tokens[counter].token_i, org);
+                } else {
+                    cerr << "error: unknown opcode " << tokens[counter].token_i << "\n";
+                    return fail;
+                }
             }
         } else {
             cerr << "error: unknown symbol " << tokens[counter].token_i << "\n";
@@ -451,26 +473,43 @@ token hint_next_token(unsigned int counter, string cur)
 
 int numeric_arg(string str, unsigned int counter, int range)
 {
-    if (hint_next_token(counter, tokens[counter].token_i).token_type != tkNUM) {
-        cerr << "error: " << str << " expects numeric args\n";
-        exit(fail);
-    } else {
-        tr = parse_num(hint_next_token(counter, tokens[counter].token_i).token_i);
-        
-        if (range == r8) {
-            if (tr > 0xFF) {
-                cerr << "error: " << str << " requires 8-bit args\n";
-                exit(fail);
-            }
-        } else if (range == r16) {
-            if (tr > 0xFFFF) {
-                cerr << "error: " << str << " requires 16-bit args\n";
-                exit(fail);
+    unsigned int label_search;
+    int label_count = 0;
+    
+    if (hint_next_token(counter, tokens[counter].token_i).token_type == tkOP) { // if it's not number
+        for (label_search = 0; label_search < labels.size(); label_search++) { // look for a label!
+            if (labels[label_search].name == hint_next_token(counter, tokens[counter].token_i).token_i) {
+                tr = labels[label_search].val; // it's a match!
+                label_count++; // no need for error.
+                break;
             }
         }
         
-        counter++;
+        if (!label_count) { // if no match was found
+            cerr << "error: no such label " << hint_next_token(counter, tokens[counter].token_i).token_i << "\n";
+            exit(fail);
+        }
+    } else if (hint_next_token(counter, tokens[counter].token_i).token_type == tkNUM) {
+        tr = parse_num(hint_next_token(counter, tokens[counter].token_i).token_i);
+    } else {
+        cerr << "error: " << str << " expects numeric args\n";
+        exit(fail);
     }
+     
+ 
+    if (range == r8) {
+        if (tr > 0xFF) {
+            cerr << "error: " << str << " requires 8-bit args\n";
+            exit(fail);
+        }
+    } else if (range == r16) {
+        if (tr > 0xFFFF) {
+            cerr << "error: " << str << " requires 16-bit args\n";
+            exit(fail);
+        }
+    }
+        
+    counter++;
     
     return counter;
 }
@@ -541,6 +580,12 @@ void write_byte(unsigned char byte)
 {
     // the surprisingly simplest function of all!
     rom[org-base] = byte; org++;
+}
+
+
+void new_label(string name, long val)
+{
+    labels.push_back({name, val});
 }
 
 
