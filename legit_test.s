@@ -30,16 +30,16 @@ reset:
   clc ; clear carry
   xce ; clear emulation flag
   
-  ; a 8-bit, xy 16-bit
-  rep #$10
-  sep #$20
+  ; a 8-bit, xy 8-bit
+  sep #$30
 
 ; Clear PPU registers
-; ldx #$33
-;loop: stz $2100,x
+  ldx #$33
+loop:
+; stz $2100,x
 ; stz $4200,x
-; dex
-; bpl loop
+  dex
+  bpl -3
 
   ; Set background color to $03E0
   lda #$E0

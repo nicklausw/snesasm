@@ -1,4 +1,7 @@
 # ignore objects and execs, and test file.
+# no need for the disassembly program either.
+disasm
+disasm.s
 *.sfc
 snesasm
 *.o

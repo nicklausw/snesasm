@@ -143,15 +143,16 @@ int tOP = 5;
 // only works with no-args
 typedef struct {
   string name;
-  bool no_arg; unsigned char no_arg_b; // xxx
-  bool one8; unsigned char one8_b;     // xxx $00
-  bool one16; unsigned char one16_b;   // xxx $1010
-  bool one24; unsigned char one24_b;   // xxx $101010
-  bool ind; unsigned char ind_b;       // xxx ($10)
-  bool lit; unsigned char lit_b;       // xxx #$10
-  bool x8; unsigned char x8_b;         // xxx $10,x
-  bool x16; unsigned char x16_b;       // xxx $1010,x
-  bool x24; unsigned char x24_b;       // xxx $101010,x
+  bool no_arg; unsigned char no_arg_b;     // xxx
+  bool one8; unsigned char one8_b;         // xxx $00
+  bool one16; unsigned char one16_b;       // xxx $1010
+  bool one24; unsigned char one24_b;       // xxx $101010
+  bool ind; unsigned char ind_b;           // xxx ($10)
+  bool lit; unsigned char lit_b;           // xxx #$10
+  bool x8; unsigned char x8_b;             // xxx $10,x
+  bool x16; unsigned char x16_b;           // xxx $1010,x
+  bool x24; unsigned char x24_b;           // xxx $101010,x
+  bool relative; unsigned char relative_b; // xxx -3
 } opcode;
 
 
@@ -161,15 +162,16 @@ typedef struct {
 
 // opcode list
 opcode opcodes[] = {
-  {"xce", t, 0xFB, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"clc", t, 0x18, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"dex", t, 0xCA, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"adc", f, 0x00, t, 0x65, t, 0x6D, t, 0x6F, t, 0x72, t, 0x69, t, 0x63, t, 0x7D, t, 0x7F},
-  {"rep", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0xC2, f, 0x00, f, 0x00, f, 0x00},
-  {"sep", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0xE2, f, 0x00, f, 0x00, f, 0x00},
-  {"ldx", f, 0x00, t, 0xA6, t, 0xAE, f, 0x00, f, 0x00, t, 0xA2, f, 0x00, f, 0x00, f, 0x00},
-  {"lda", f, 0x00, t, 0xA5, t, 0xAD, t, 0xAF, t, 0xB2, t, 0xA9, f, 0xB5, f, 0xBD, f, 0xBF},
-  {"sta", f, 0x00, t, 0x85, t, 0x8D, f, 0x8F, t, 0x92, f, 0x00, f, 0x95, f, 0x9D, f, 0x9F}
+  {"xce", t, 0xFB, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+  {"clc", t, 0x18, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+  {"dex", t, 0xCA, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+  {"adc", f, 0x00, t, 0x65, t, 0x6D, t, 0x6F, t, 0x72, t, 0x69, t, 0x63, t, 0x7D, t, 0x7F, f, 0x00},
+  {"rep", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0xC2, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+  {"sep", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0xE2, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+  {"ldx", f, 0x00, t, 0xA6, t, 0xAE, f, 0x00, f, 0x00, t, 0xA2, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+  {"lda", f, 0x00, t, 0xA5, t, 0xAD, t, 0xAF, t, 0xB2, t, 0xA9, f, 0xB5, f, 0xBD, f, 0xBF, f, 0x00},
+  {"sta", f, 0x00, t, 0x85, t, 0x8D, f, 0x8F, t, 0x92, f, 0x00, f, 0x95, f, 0x9D, f, 0x9F, f, 0x00},
+  {"bpl", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0x10},
 };
 
 
@@ -370,7 +372,7 @@ int lexer()
       
       // no need for a counter++ here, it's handled above.
       continue;
-    } else if (isdigit(ins[counter]) || ins[counter] == '$' || ins[counter] == '%') {
+    } else if (isdigit(ins[counter]) || ins[counter] == '$' || ins[counter] == '%' || ins[counter] == '-') {
       // number
       ct_used = true;
       tokens[current_token].token_type = tkNUM;
@@ -524,7 +526,7 @@ int pass()
         } else continue;
         
         // it's a match
-        if (next_tok.token_type == tkNL) {
+        if (next_tok.token_type == tkNL || next_tok.token_type == tkUNDEF) {
           if (opcodes[opcounter].no_arg == true) {
             write_byte(opcodes[opcounter].no_arg_b);
             continue;
@@ -552,13 +554,27 @@ int pass()
           }
         } else if (next_tok.token_type == tkNUM) {
           // it's a number!
-          // this could go multiple ways. for now we'll only
-          // do the one-arg way.
+          // this could go multiple ways.
+          
+          // is it relative?
+          if (opcodes[opcounter].relative == true) {
+            // it is!
+            unsigned char relative_temp;
+            if (next_tok.token_i[0] == '-') {
+              relative_temp = 256-parse_num(next_tok.token_i);
+            } else {
+              relative_temp = parse_num(next_tok.token_i);
+            }
+            
+            write_byte(opcodes[opcounter].relative_b);
+            write_byte(relative_temp);
+            counter++; continue;
+          }
           
           if (parse_num(next_tok.token_i) < 256) {
             // 8-bit!
             if (opcodes[opcounter].one8 == true) {
-              write_byte(opcodes[opcounter].x8_b);
+              write_byte(opcodes[opcounter].one8_b);
               write_byte(parse_num(next_tok.token_i));
               counter++; continue;
             } else {
@@ -568,7 +584,7 @@ int pass()
           } else if (parse_num(next_tok.token_i) < 65536) {
             // 16-bit!
             if (opcodes[opcounter].one16 == true) {
-              write_byte(opcodes[opcounter].x16_b);
+              write_byte(opcodes[opcounter].one16_b);
               write_byte(parse_num(next_tok.token_i) & 0xFF);
               write_byte(parse_num(next_tok.token_i) >> 8);
               counter++; continue;
@@ -579,7 +595,7 @@ int pass()
           } else if (parse_num(next_tok.token_i) < 0xFFFFFF+1) {
             // 24-bit!
             if (opcodes[opcounter].one24 == true) {
-              write_byte(opcodes[opcounter].x24_b);
+              write_byte(opcodes[opcounter].one24_b);
               write_byte(parse_num(next_tok.token_i) & 0xFF);
               write_byte((parse_num(next_tok.token_i) >> 8) & 0xFF); // crazy middle byte
               write_byte(parse_num(next_tok.token_i) >> 16);
