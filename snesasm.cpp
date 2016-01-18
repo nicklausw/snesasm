@@ -280,7 +280,28 @@ int lexer()
     
     while (counter < ins.length()) {
         // handle newlines
-        if (ins[counter] == '\n' || ins[counter] == ' ') {
+        if (ins[counter] == '\n') {
+            if (ct_used == false) {
+                counter++;
+                current_token++;
+                tokens.resize((current_token+2)*sizeof(token));
+                tokens[current_token].token_type = tkNL;
+            } else {
+                // handle vector size
+                tokens.resize((current_token+1)*sizeof(token));
+                
+                // get ready for another loop
+                ct_used = false;
+                counter++;
+                current_token++;
+                tokens.resize((current_token+2)*sizeof(token));
+                tokens[current_token].token_type = tkNL;
+                current_token++;
+            }
+            continue;
+        }
+        
+        if (ins[counter] == ' ') {
             if (ct_used == false) {
                 counter++;
             } else {
@@ -292,8 +313,6 @@ int lexer()
                 counter++;
                 current_token++;
             }
-            tokens.resize((current_token+1)*sizeof(token));
-            tokens[current_token].token_type = tkNL;
             continue;
         }
         
@@ -446,13 +465,13 @@ int pass()
                     org = (banksize*cur_bank)+base;
                 }
             } else if (tokens[counter].token_i == "db") {
-                while (hint_next_token(counter, "db").token_type == tkNUM ||
-                       hint_next_token(counter, "dw").token_type == tkOP) {
+                while (hint_next_token(counter, "db").token_type != tkNL &&
+                       hint_next_token(counter, "db").token_type != tkUNDEF) {
                     counter = numeric_arg("db", counter, r8); write_byte(tr & 0xFF);
                 }
             } else if (tokens[counter].token_i == "dw") {
-                while (hint_next_token(counter, "dw").token_type == tkNUM ||
-                       hint_next_token(counter, "dw").token_type == tkOP) {
+                while (hint_next_token(counter, "dw").token_type != tkNL &&
+                       hint_next_token(counter, "dw").token_type != tkUNDEF) {
                     counter = numeric_arg("dw", counter, r16);
                     write_byte(tr >> 8);
                     write_byte(tr & 0xFF);
@@ -469,8 +488,8 @@ int pass()
                 cout << "error: unknown directive " << tokens[counter].token_i << "\n";
                 return fail;
             }
-        } else if (tokens[counter].token_type == tkNUM) {
-            cerr << "error: loose num " << tokens[counter].token_i << "\n";
+        } else if (tokens[counter].token_type == tkNUM || tokens[counter].token_type == tkARG) {
+            cerr << "error: loose phrase " << tokens[counter].token_i << "\n";
             return fail;
         } else if (tokens[counter].token_type == tkOP) {
             // opcode
@@ -481,8 +500,15 @@ int pass()
                 } else continue;
                 
                 // it's a match
-                //if (hint_next_token(counter, "arg check").token_type !=)
-                write_byte(opcodes[opcounter].no_arg_b);
+                if (hint_next_token(counter, "arg check").token_type == tkNL) {
+                    if (opcodes[opcounter].no_arg == true) {
+                        write_byte(opcodes[opcounter].no_arg_b);
+                        continue;
+                    } else {
+                        cerr << "error: opcode " << opcodes[opcounter].name << " requires args\n";
+                        return fail;
+                    }
+                }
             }
             
             if (!match_count) {
@@ -496,8 +522,8 @@ int pass()
         } else if (tokens[counter].token_type == tkNL) {
             continue;
         } else {
-            cerr << "error: unknown symbol " << tokens[counter].token_i << "\n";
-            return fail;
+            // probably a blank line
+            continue;
         }
     }
     
