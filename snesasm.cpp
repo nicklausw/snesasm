@@ -132,15 +132,27 @@ int tDW = 1;
 // only works with no-args
 typedef struct {
     string name;
-    unsigned char byte;
-    bool no_arg;
+    bool no_arg; unsigned char no_arg_b;
+    bool one8; unsigned char one8_b;
+    bool one16; unsigned char one16_b;
+    bool one24; unsigned char one24_b;
+    bool ind; unsigned char ind_b;
+    bool lit; unsigned char lit_b;
+    bool x8; unsigned char x8_b;
+    bool x16; unsigned char x16_b;
+    bool x24; unsigned char x24_b;
 } opcode;
 
 
+// we need to shorthand...a lot
+#define t true
+#define f false
+
 // opcode list
 opcode opcodes[] = {
-    {"xce", 0xFB, true},
-    {"clc", 0x18, true}
+    {"xce", t, 0xFB, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+    {"clc", t, 0x18, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+    {"adc", f, 0x00, t, 0x65, t, 0x6D, t, 0x6F, t, 0x72, t, 0x69, t, 0x63, t, 0x7D, t, 0x7F}
 };
 
 
@@ -458,7 +470,7 @@ int pass()
                 if (opcodes[opcounter].no_arg == false) {
                     cerr << "error: no-arg opcodes only for now.\n";
                 }
-                write_byte(opcodes[opcounter].byte);
+                write_byte(opcodes[opcounter].no_arg_b);
             }
             
             if (!match_count) {

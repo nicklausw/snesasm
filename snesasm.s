@@ -21,13 +21,14 @@
 ; now the code
 .bank 0
 
-reset:
-
 ; the assembler default to this
 ; but might as well give clarity
 .org $8000
 
-clc
+
+; label to opcode works simply due to
+; how the lexer works. sweet
+reset: clc
 xce
 
 ; forward calling labels is kinda
