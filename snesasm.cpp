@@ -90,10 +90,10 @@ unsigned char version = 0;
 unsigned char lohirom = lorom;
 unsigned char sfrom = slowrom;
 unsigned char rombanks = 0;
-long banksize = 0;
-int cur_bank = 0;
-int base = 0x8000;
-long org = 0x8000;
+unsigned long banksize = 0;
+unsigned long cur_bank = 0;
+unsigned long base = 0x8000;
+unsigned long org = 0x8000;
 
 // define switches
 bool rombanks_defined = false;
@@ -450,6 +450,9 @@ int pass()
             } else if (tokens[counter].token_i == "bank") {
                 counter = numeric_arg("bank", counter, rNONE); cur_bank = tr;
                 
+                // reset org
+                org = base*(cur_bank+1);
+                
                 if (rombanks_defined == false) {
                     cerr << "error: rombanks needs to be defined before .bank\n";
                     return fail;
@@ -652,6 +655,18 @@ void write_byte(unsigned char byte)
 {
     // the surprisingly simplest function of all!
     rom[org-base] = byte; org++;
+    
+    // ...well, that's before bug checks came in
+    if (org > (base*(cur_bank+2))) {
+        if (cur_bank >= rombanks) {
+            cerr << "error: no more room in rom\n";
+            exit(fail);
+        } else {
+            cerr << "warning: bank overflow; rolling into bank " << cur_bank+1 << "\n";
+            cerr << "org: " << org << " base: " << base << " banksize: " << banksize << "\n";
+            cur_bank++;
+        }
+    }
 }
 
 

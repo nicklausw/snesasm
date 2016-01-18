@@ -23,7 +23,7 @@
 
 ; the assembler default to this
 ; but might as well give clarity
-.org $8000
+;.org $8000
 
 
 ; label to opcode works simply due to
@@ -42,6 +42,15 @@ bla:
 .org $fffd ; emu reset vector
 .dw reset ; labels!
 
+; these give an overflow warning.
+; this is the correct functionality.
+;.dw $0000
+;.dw $0000
+
+; when properly banked, no errors.
+; org is reset properly here.
+;.bank 1
+;.dw $0000
 
 
 ; the end?
