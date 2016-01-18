@@ -2,7 +2,22 @@
 ; that actually attempts a snes
 ; skeleton.
 
-; currently won't build.
+; thanks blargg for code.
+
+; currently won't build all the way.
+
+; things that need to work:
+; name directive
+; ppu clear routine
+; opcodes with label args
+; proper a and xy size control
+
+; header
+.compcheck ; checksum
+.romsize $7 ; rom size
+.carttype 0 ; rom only
+.licenseecode 0
+.version 1
 
 .lorom
 .rombanks 4
@@ -11,16 +26,20 @@
 
 
 .org $8000
-
+reset:
   clc ; clear carry
   xce ; clear emulation flag
+  
+  ; a 8-bit, xy 16-bit
+  rep #$10
+  sep #$20
 
 ; Clear PPU registers
-  ldx #$33
-loop: stz $2100,x
-  stz $4200,x
-  dex
-  bpl @loop
+; ldx #$33
+;loop: stz $2100,x
+; stz $4200,x
+; dex
+; bpl loop
 
   ; Set background color to $03E0
   lda #$E0
@@ -33,4 +52,7 @@ loop: stz $2100,x
   sta $2100
 
 forever:
-  jmp forever
+;  jmp forever
+
+.org $fffd
+.dw reset

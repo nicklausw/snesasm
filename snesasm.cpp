@@ -143,15 +143,15 @@ int tOP = 5;
 // only works with no-args
 typedef struct {
   string name;
-  bool no_arg; unsigned char no_arg_b;
-  bool one8; unsigned char one8_b;
-  bool one16; unsigned char one16_b;
-  bool one24; unsigned char one24_b;
-  bool ind; unsigned char ind_b;
-  bool lit; unsigned char lit_b;
-  bool x8; unsigned char x8_b;
-  bool x16; unsigned char x16_b;
-  bool x24; unsigned char x24_b;
+  bool no_arg; unsigned char no_arg_b; // xxx
+  bool one8; unsigned char one8_b;     // xxx $00
+  bool one16; unsigned char one16_b;   // xxx $1010
+  bool one24; unsigned char one24_b;   // xxx $101010
+  bool ind; unsigned char ind_b;       // xxx ($10)
+  bool lit; unsigned char lit_b;       // xxx #$10
+  bool x8; unsigned char x8_b;         // xxx $10,x
+  bool x16; unsigned char x16_b;       // xxx $1010,x
+  bool x24; unsigned char x24_b;       // xxx $101010,x
 } opcode;
 
 
@@ -163,7 +163,13 @@ typedef struct {
 opcode opcodes[] = {
   {"xce", t, 0xFB, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
   {"clc", t, 0x18, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"adc", f, 0x00, t, 0x65, t, 0x6D, t, 0x6F, t, 0x72, t, 0x69, t, 0x63, t, 0x7D, t, 0x7F}
+  {"dex", t, 0xCA, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
+  {"adc", f, 0x00, t, 0x65, t, 0x6D, t, 0x6F, t, 0x72, t, 0x69, t, 0x63, t, 0x7D, t, 0x7F},
+  {"rep", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0xC2, f, 0x00, f, 0x00, f, 0x00},
+  {"sep", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0xE2, f, 0x00, f, 0x00, f, 0x00},
+  {"ldx", f, 0x00, t, 0xA6, t, 0xAE, f, 0x00, f, 0x00, t, 0xA2, f, 0x00, f, 0x00, f, 0x00},
+  {"lda", f, 0x00, t, 0xA5, t, 0xAD, t, 0xAF, t, 0xB2, t, 0xA9, f, 0xB5, f, 0xBD, f, 0xBF},
+  {"sta", f, 0x00, t, 0x85, t, 0x8D, f, 0x8F, t, 0x92, f, 0x00, f, 0x95, f, 0x9D, f, 0x9F}
 };
 
 
@@ -532,7 +538,7 @@ int pass()
               write_byte(parse_num(next_tok.token_i));
               counter++; continue;
             } else {
-              cerr << "error: opcode " << opcodes[opcounter].name << " takes 8-bit literals\n";
+              cerr << "error: opcode " << opcodes[opcounter].name << " takes only 8-bit literals\n";
               return fail;
             }
           } else {
@@ -547,35 +553,35 @@ int pass()
           
           if (parse_num(next_tok.token_i) < 256) {
             // 8-bit!
-            if (opcodes[opcounter].x8 == true) {
+            if (opcodes[opcounter].one8 == true) {
               write_byte(opcodes[opcounter].x8_b);
               write_byte(parse_num(next_tok.token_i));
               counter++; continue;
             } else {
-              cerr << "error: opcode" << opcodes[opcounter].name << " can't take 8-bit args\n";
+              cerr << "error: opcode " << opcodes[opcounter].name << " can't take 8-bit args\n";
               return fail; 
             }
           } else if (parse_num(next_tok.token_i) < 65536) {
             // 16-bit!
-            if (opcodes[opcounter].x16 == true) {
+            if (opcodes[opcounter].one16 == true) {
               write_byte(opcodes[opcounter].x16_b);
               write_byte(parse_num(next_tok.token_i) & 0xFF);
               write_byte(parse_num(next_tok.token_i) >> 8);
               counter++; continue;
             } else {
-              cerr << "error: opcode" << opcodes[opcounter].name << " can't take 16-bit args\n";
+              cerr << "error: opcode " << opcodes[opcounter].name << " can't take 16-bit args\n";
               return fail; 
             }
           } else if (parse_num(next_tok.token_i) < 0xFFFFFF+1) {
             // 24-bit!
-            if (opcodes[opcounter].x24 == true) {
+            if (opcodes[opcounter].one24 == true) {
               write_byte(opcodes[opcounter].x24_b);
               write_byte(parse_num(next_tok.token_i) & 0xFF);
               write_byte((parse_num(next_tok.token_i) >> 8) & 0xFF); // crazy middle byte
               write_byte(parse_num(next_tok.token_i) >> 16);
               counter++; continue;
             } else {
-              cerr << "error: opcode" << opcodes[opcounter].name << " can't take 24-bit args\n";
+              cerr << "error: opcode " << opcodes[opcounter].name << " can't take 24-bit args\n";
               return fail; 
             }
           }
