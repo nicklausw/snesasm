@@ -152,14 +152,14 @@ typedef struct {
   int no_arg;     // xxx
   int one8;       // xxx $00
   int one16;      // xxx $1010
-  int one24;      // xxx $101010
-  int ind;        // xxx ($10)
-  int lit;        // xxx #$10
-  int x8;         // xxx $10,x
-  int x16;        // xxx $1010,x
-  int x24;        // xxx $101010,x
-  int relative8;  // xxx -3
-  int relative16; // xxx -356
+//  int one24;      // xxx $101010
+//  int ind;        // xxx ($10)
+//  int lit;        // xxx #$10
+//  int x8;         // xxx $10,x
+//  int x16;        // xxx $1010,x
+//  int x24;        // xxx $101010,x
+//  int relative8;  // xxx -3
+//  int relative16; // xxx -356
 } opcode;
 
 
@@ -169,95 +169,96 @@ typedef struct {
 
 // opcode list
 opcode opcodes[] = {
-  {"adc", -1},
-  {"and", -1},
-  {"asl", -1},
-  {"bcc", -1},
-  {"bcs", -1},
-  {"beq", -1},
-  {"bit", -1},
-  {"bmi", -1},
-  {"bne", -1},
-  {"bpl", -1},
-  {"bra", -1},
-  {"brk", 0x00},
-  {"brl", -1},
-  {"bvc", -1},
-  {"bvs", -1},
-  {"clc", 0x18},
-  {"cld", 0xD8},
-  {"cli", 0x58},
-  {"clv", 0xB8},
-  {"cmp", -1},
-  {"cop", -1},
-  {"cpx", -1},
-  {"cpy", -1},
-  {"dec", -1},
-  {"dex", 0xCA},
-  {"dey", 0x88},
-  {"eor", -1},
-  {"inc", -1},
-  {"inx", 0xE8},
-  {"iny", 0xC8},
-  {"jmp", -1},
-  {"jsr", -1},
-  {"lda", -1},
-  {"ldx", -1},
-  {"ldy", -1},
-  {"lsr", -1},
-  {"mvn", -1},
-  {"mvp", -1},
-  {"nop", 0xEA},
-  {"ora", -1},
-  {"pea", -1},
-  {"pei", -1},
-  {"per", -1},
-  {"pha", 0x48},
-  {"phb", 0x8B},
-  {"phd", 0x0B},
-  {"phk", 0x4B},
-  {"php", 0x08},
-  {"phx", 0xDA},
-  {"phy", 0x5A},
-  {"pla", 0x68},
-  {"plb", 0xAB},
-  {"pld", 0x2B},
-  {"plp", 0x28},
-  {"plx", 0xFA},
-  {"ply", 0x7A},
-  {"rep", -1},
-  {"rol", -1},
-  {"ror", -1},
-  {"rti", 0x40},
-  {"rtl", 0x6B},
-  {"rts", 0x60},
-  {"sbc", -1},
-  {"sec", 0x38},
-  {"sed", 0xF8},
-  {"sei", 0x78},
-  {"sep", -1},
-  {"sta", -1},
-  {"stp", 0xDB},
-  {"stx", -1},
-  {"sty", -1},
-  {"stz", -1},
-  {"tax", 0xAA},
-  {"tay", 0xA8},
-  {"tcd", 0x5B},
-  {"tcs", 0x1B},
-  {"tdc", 0x7B},
-  {"trb", -1},
-  {"tsc", 0x3B},
-  {"tsx", 0xBA},
-  {"txa", 0x8A},
-  {"txs", 0x9A},
-  {"txy", 0x9B},
-  {"tya", 0x98},
-  {"tyx", 0xBB},
-  {"wai", 0xCB},
-  {"wdm", 0x42},
-  {"xba", 0xEB},
-  {"xce", 0xFB}
+  {"adc", -1, 0x65, 0x6D},
+  {"and", -1, 0x25, 0x2D},
+  {"asl", -1, 0x06, 0x0E},
+  {"bcc", -1, -1, -1},
+  {"bcs", -1, -1, -1},
+  {"beq", -1, -1, -1},
+  {"bit", -1, 0x24, 0x2C},
+  {"bmi", -1, -1, -1},
+  {"bne", -1, -1, -1},
+  {"bpl", -1, -1, -1},
+  {"bra", -1, -1, -1},
+  {"brk", 0x00, -1, -1},
+  {"brl", -1, -1, -1},
+  {"bvc", -1, -1, -1},
+  {"bvs", -1, -1, -1},
+  {"clc", 0x18, -1, -1},
+  {"cld", 0xD8, -1, -1},
+  {"cli", 0x58, -1, -1},
+  {"clv", 0xB8, -1, -1},
+  {"cmp", -1, 0xC5, 0xC5},
+  {"cop", -1, -1, -1},
+  {"cpx", -1, 0xE4, 0xEC},
+  {"cpy", -1, 0xC4, 0xCC},
+  {"dec", -1, 0xC6, 0xCE},
+  {"dex", 0xCA, -1, -1},
+  {"dey", 0x88, -1, -1},
+  {"eor", -1, 0x45, 0x4D},
+  {"inc", -1, 0xE6, 0xEE},
+  {"inx", 0xE8, -1, -1},
+  {"iny", 0xC8, -1, -1},
+  {"jmp", -1, -1, 0x4C},
+  {"jsr", -1, -1, 0x20},
+  {"lda", -1, 0xA5, 0xAD},
+  {"ldx", -1, 0xA6, 0xAE},
+  {"ldy", -1, 0xA4, 0xAC},
+  {"lsr", -1, 0x46, 0x4E},
+  {"mvn", -1, -1, -1},
+  {"mvp", -1, -1, -1},
+  {"nop", 0xEA, -1, -1},
+  {"ora", -1, 0x05, 0x0D},
+  {"pea", -1, -1, -1},
+  {"pei", -1, -1, -1},
+  {"per", -1, -1, -1},
+  {"pha", 0x48, -1, -1},
+  {"phb", 0x8B, -1, -1},
+  {"phd", 0x0B, -1, -1},
+  {"phk", 0x4B, -1, -1},
+  {"php", 0x08, -1, -1},
+  {"phx", 0xDA, -1, -1},
+  {"phy", 0x5A, -1, -1},
+  {"pla", 0x68, -1, -1},
+  {"plb", 0xAB, -1, -1},
+  {"pld", 0x2B, -1, -1},
+  {"plp", 0x28, -1, -1},
+  {"plx", 0xFA, -1, -1},
+  {"ply", 0x7A, -1, -1},
+  {"rep", -1, -1, -1},
+  {"rol", -1, 0x26, 0x2E},
+  {"ror", -1, 0x66, 0x6E},
+  {"rti", 0x40, -1, -1},
+  {"rtl", 0x6B, -1, -1},
+  {"rts", 0x60, -1, -1},
+  {"sbc", -1, 0xE5, 0xED},
+  {"sec", 0x38, -1, -1},
+  {"sed", 0xF8, -1, -1},
+  {"sei", 0x78, -1, -1},
+  {"sep", -1, -1, -1},
+  {"sta", -1, 0x92, 0x8D},
+  {"stp", 0xDB, -1, -1},
+  {"stx", -1, 0x86, 0x8E},
+  {"sty", -1, 0x84, 0x8C},
+  {"stz", -1, 0x64, 0x9C},
+  {"tax", 0xAA, -1, -1},
+  {"tay", 0xA8, -1, -1},
+  {"tcd", 0x5B, -1, -1},
+  {"tcs", 0x1B, -1, -1},
+  {"tdc", 0x7B, -1, -1},
+  {"trb", -1, 0x14, 0x1C},
+  {"tsb", -1, 0x04, 0x0C},
+  {"tsc", 0x3B, -1, -1},
+  {"tsx", 0xBA, -1, -1},
+  {"txa", 0x8A, -1, -1},
+  {"txs", 0x9A, -1, -1},
+  {"txy", 0x9B, -1, -1},
+  {"tya", 0x98, -1, -1},
+  {"tyx", 0xBB, -1, -1},
+  {"wai", 0xCB, -1, -1},
+  {"wdm", 0x42, -1, -1},
+  {"xba", 0xEB, -1, -1},
+  {"xce", 0xFB, -1, -1}
 };
 
 
@@ -630,6 +631,7 @@ int pass()
         return fail;
       }
       
+      
       for (unsigned int opcounter = 0; opcounter < sizeof(opcodes)/sizeof(opcode); opcounter++) {
         if (tokens[pass_counter].token_i == opcodes[opcounter].name) {
           match_count++;
@@ -637,14 +639,14 @@ int pass()
         
         // it's a match
         if (next_tok.token_type == tkNL || next_tok.token_type == tkUNDEF) {
-          if (opcodes[opcounter].no_arg == true) {
-            write_byte(opcodes[opcounter].no_arg_b);
+          if (opcodes[opcounter].no_arg != -1) {
+            write_byte(opcodes[opcounter].no_arg);
             continue;
           } else {
             cerr << "error: opcode " << opcodes[opcounter].name << " expects args\n";
             return fail;
           }
-        } else if (next_tok.token_i[0] == '#') {
+        }  /*else if (next_tok.token_i[0] == '#') {
           // it's a literal!
           next_tok.token_i.erase(0, 1);
           if (opcodes[opcounter].lit == true) {
@@ -715,7 +717,7 @@ int pass()
               return fail; 
             }
           }
-        }
+        }*/
       }
       
       if (!match_count) {
