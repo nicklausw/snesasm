@@ -28,6 +28,10 @@ using namespace std; // print
 #define lorom 0
 #define hirom 1
 
+// default to slowrom
+#define slowrom 0
+#define fastrom 1
+
 
 // token struct
 typedef struct {
@@ -49,6 +53,7 @@ int one_numeric_arg(string str, unsigned int counter, int range); // directives 
 long parse_num(string num); // number parse
 string str_tolower(string str); // lower all caps in string
 void write_byte(unsigned char byte); // write byte to rom
+void snes(); // do snes opcodes!
 
 
 // tokens vector
@@ -72,12 +77,13 @@ string ins; // universal file string
 // snes variables
 bool compcheck_flag = false;
 bool autoromsize_flag = false;
-int romsize = 0;
-int carttype = 0;
-int licenseecode = 0;
-int version = 0;
-int lohirom = lorom;
-int rombanks = 0;
+unsigned char romsize = 0;
+unsigned char carttype = 0;
+unsigned char licenseecode = 0;
+unsigned char version = 0;
+unsigned char lohirom = lorom;
+unsigned char sfrom = slowrom;
+unsigned char rombanks = 0;
 long banksize = 0;
 int cur_bank = 0;
 int base = 0x8000;
@@ -92,7 +98,7 @@ long tr = 0;
 
 
 // the rom vector
-vector<char> rom;
+vector<unsigned char> rom;
 
 
 // opcode struct
@@ -143,6 +149,8 @@ int snesasm(string in, string out)
     file_to_string(in); // read file
     if (lexer() == fail) return fail; // lexer magic
     if (pass() == fail) return fail; // pass
+    
+    snes();
     
     ofstream outs(out);
     copy(rom.begin(), rom.end(), ostreambuf_iterator<char>(outs));
@@ -376,6 +384,10 @@ int pass()
                 lohirom = lorom;
             } else if (tokens[counter].token_i == "hirom") {
                 lohirom = hirom;
+            } else if (tokens[counter].token_i == "slowrom") {
+                sfrom = slowrom;
+            } else if (tokens[counter].token_i == "fastrom") {
+                sfrom = fastrom;
             } else {
                 cout << "error: unknown directive " << tokens[counter].token_i << "\n";
                 return fail;
@@ -516,7 +528,62 @@ string str_tolower(string str)
 void write_byte(unsigned char byte)
 {
     // the surprisingly simplest function of all!
-    rom[org-base] = byte;
-    org++;
+    rom[org-base] = byte; org++;
 }
 
+
+void snes()
+{
+    unsigned char build_byte = 0x00;
+    
+    if (lohirom == hirom) {
+        build_byte += 0x1;
+    }
+    
+    if (sfrom == slowrom) {
+        build_byte += 0x20;
+    }
+    
+    base = 0x8000;
+    
+    org = 0xFFD5;
+    write_byte(build_byte);
+    write_byte(carttype);
+    write_byte(romsize);
+    write_byte(0);
+    write_byte(0);
+    write_byte(licenseecode);
+    write_byte(version);
+    
+    // clear checksum bytes
+    write_byte(0);
+    write_byte(0);
+    write_byte(0);
+    write_byte(0);
+    
+    // temporary fix for snes9x
+    // fixes start vector for compatibility
+    org = 0xfffd;
+    write_byte(0x80);
+    
+    
+    // the weird part, checksum calculation.
+    auto checksum = 0ULL;
+    auto inverse = 0ULL;
+    for (auto counter = 0ULL; counter < rom.size(); counter++) {
+        checksum += rom[counter];
+    }
+    
+    
+    checksum += 0x1FE; // add inverse to checksum
+    checksum &= 0xFFFF; // lower 16 bytes
+    inverse = checksum ^ 0xFFFF; // 0xFFFF - checksum
+    
+    
+    // write to rom
+    org = 0xFFDC;
+    write_byte(inverse & 0xFF);
+    write_byte(inverse >> 8);
+    write_byte(checksum & 0xFF);
+    write_byte(checksum >> 8);
+}

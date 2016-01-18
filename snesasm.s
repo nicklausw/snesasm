@@ -5,6 +5,7 @@
 
 ; let's set up the rom.
 .lorom
+.slowrom
 .banksize $8000
 .rombanks 4
 
