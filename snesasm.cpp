@@ -191,7 +191,7 @@ void file_to_string(string file)
     // simplify multiple spaces to one space
     ins.clear();
     
-    while (counter < str.length()) {
+    while (counter <= str.length()) {
         if (str[counter] == ' ') {
             ins.append(" ");
             while (str[counter] == ' ') {
@@ -209,7 +209,7 @@ void file_to_string(string file)
     ins.clear();
     counter = 0;
     
-    while (counter < str.length()) {
+    while (counter <= str.length()) {
         if (str[counter] == ';') {
             ins.append("\n");
             while (str[counter] != '\n') {
@@ -338,7 +338,7 @@ int append_token(unsigned int counter, int current_token)
 
 int pass()
 {    
-    for (unsigned int counter = 0; counter <= (tokens.size())/sizeof(token); counter++) {
+    for (unsigned int counter = 0; counter < (tokens.size())/sizeof(token); counter++) {
         if (tokens[counter].token_type == tkDIR) {
             if (tokens[counter].token_i == "compcheck") {
                 compcheck_flag = true;
