@@ -244,6 +244,10 @@ void file_to_string(string file)
   
   str = ins;
   
+  // prevent bug with last line being screwed up
+  // by erasing very last character (copied twice)
+  str.pop_back();
+  
   // simplify multiple spaces to one space
   ins.clear();
   
