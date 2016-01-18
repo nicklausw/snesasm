@@ -68,6 +68,8 @@ int tkNUM = 1; // number
 int tkDIR = 2; // directive
 int tkOP = 3; // opcode
 int tkLB = 4; // label
+int tkARG = 5; // opcode arg
+int tkNL = 6; // newline
 
 
 // ranges
@@ -281,7 +283,6 @@ int lexer()
         if (ins[counter] == '\n' || ins[counter] == ' ') {
             if (ct_used == false) {
                 counter++;
-                continue;
             } else {
                 // handle vector size
                 tokens.resize((current_token+1)*sizeof(token));
@@ -290,8 +291,10 @@ int lexer()
                 ct_used = false;
                 counter++;
                 current_token++;
-                continue;
             }
+            tokens.resize((current_token+1)*sizeof(token));
+            tokens[current_token].token_type = tkNL;
+            continue;
         }
         
         
@@ -333,6 +336,18 @@ int lexer()
             // number
             ct_used = true;
             tokens[current_token].token_type = tkNUM;
+            
+            counter = append_token(counter, current_token);
+            
+            // no case sensitivity
+            tokens[current_token].token_i = str_tolower(tokens[current_token].token_i);
+            
+            // no need for a counter++ here, it's handled above.
+            continue;
+        } else if (ins[counter] == '#' || ins[counter] == '(') {
+            // opcode arg
+            ct_used = true;
+            tokens[current_token].token_type = tkARG;
             
             counter = append_token(counter, current_token);
             
@@ -466,10 +481,7 @@ int pass()
                 } else continue;
                 
                 // it's a match
-                // ...but it has to have no args for now.
-                if (opcodes[opcounter].no_arg == false) {
-                    cerr << "error: no-arg opcodes only for now.\n";
-                }
+                //if (hint_next_token(counter, "arg check").token_type !=)
                 write_byte(opcodes[opcounter].no_arg_b);
             }
             
@@ -481,6 +493,8 @@ int pass()
         } else if (tokens[counter].token_type == tkLB) {
             tokens[counter].token_i.pop_back();
             new_label(tokens[counter].token_i, org);
+        } else if (tokens[counter].token_type == tkNL) {
+            continue;
         } else {
             cerr << "error: unknown symbol " << tokens[counter].token_i << "\n";
             return fail;
