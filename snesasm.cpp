@@ -49,7 +49,7 @@ int lexer(); // the wonderful lexer magic
 int append_token(unsigned int counter, int current_token); // add token to string
 int pass(); // pass function
 token hint_next_token(unsigned int counter, string cur); // speaks for itself
-int one_numeric_arg(string str, unsigned int counter, int range); // directives with one number arg
+int numeric_arg(string str, unsigned int counter, int range); // directives with one number arg
 long parse_num(string num); // number parse
 string str_tolower(string str); // lower all caps in string
 void write_byte(unsigned char byte); // write byte to rom
@@ -345,15 +345,17 @@ int pass()
             } else if (tokens[counter].token_i == "autoromsize") {
                 autoromsize_flag = true;
             } else if (tokens[counter].token_i == "romsize") {
-                counter = one_numeric_arg("romsize", counter, r8); romsize = tr;
+                counter = numeric_arg("romsize", counter, r8); romsize = tr;
             } else if (tokens[counter].token_i == "carttype") {
-                counter = one_numeric_arg("carttype", counter, r8); carttype = tr;
+                counter = numeric_arg("carttype", counter, r8); carttype = tr;
             } else if (tokens[counter].token_i == "licenseecode") {
-                counter = one_numeric_arg("licenseecode", counter, r8); licenseecode = tr;
+                counter = numeric_arg("licenseecode", counter, r8); licenseecode = tr;
             } else if (tokens[counter].token_i == "version") {
-                counter = one_numeric_arg("version", counter, r8); version = tr;
+                counter = numeric_arg("version", counter, r8); version = tr;
+            } else if (tokens[counter].token_i == "org") {
+                counter = numeric_arg("org", counter, r16); org = tr;
             } else if (tokens[counter].token_i == "banksize") {
-                counter = one_numeric_arg("banksize", counter, r16); banksize = tr;
+                counter = numeric_arg("banksize", counter, r16); banksize = tr;
                 banksize_defined = true;
                 
                 if (rombanks != 0) {
@@ -362,7 +364,7 @@ int pass()
                 }
             } else if (tokens[counter].token_i == "rombanks") {
                 // not sure about rombanks limit
-                counter = one_numeric_arg("rombanks", counter, rNONE); rombanks = tr;
+                counter = numeric_arg("rombanks", counter, rNONE); rombanks = tr;
                 rombanks_defined = true;
                 
                 if (banksize != 0) {
@@ -370,7 +372,7 @@ int pass()
                     rom.resize(rombanks*banksize);
                 }
             } else if (tokens[counter].token_i == "bank") {
-                counter = one_numeric_arg("bank", counter, rNONE); cur_bank = tr;
+                counter = numeric_arg("bank", counter, rNONE); cur_bank = tr;
                 
                 if (rombanks_defined == false) {
                     cerr << "error: rombanks needs to be defined before .bank\n";
@@ -385,6 +387,10 @@ int pass()
                     return fail;
                 } else {
                     org = (banksize*cur_bank)+base;
+                }
+            } else if (tokens[counter].token_i == "db") {
+                while (hint_next_token(counter, "db").token_type == tkNUM) {
+                    counter = numeric_arg("db", counter, r8); write_byte(tr & 0xFF);
                 }
             } else if (tokens[counter].token_i == "lorom") {
                 lohirom = lorom;
@@ -443,7 +449,7 @@ token hint_next_token(unsigned int counter, string cur)
 }
 
 
-int one_numeric_arg(string str, unsigned int counter, int range)
+int numeric_arg(string str, unsigned int counter, int range)
 {
     if (hint_next_token(counter, tokens[counter].token_i).token_type != tkNUM) {
         cerr << "error: " << str << " expects numeric args\n";
@@ -566,11 +572,6 @@ void snes()
     write_byte(0);
     write_byte(0);
     write_byte(0);
-    
-    // temporary fix for snes9x
-    // fixes start vector for compatibility
-    org = 0xfffd;
-    write_byte(0x80);
     
     
     // the weird part, checksum calculation.
