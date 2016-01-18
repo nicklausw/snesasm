@@ -690,23 +690,25 @@ void snes()
     write_byte(0);
     
     
-    // the weird part, checksum calculation.
-    auto checksum = 0ULL;
-    auto inverse = 0ULL;
-    for (auto counter = 0ULL; counter < rom.size(); counter++) {
-        checksum += rom[counter];
+    if (compcheck_flag == true) {
+        // the weird part, checksum calculation.
+        auto checksum = 0ULL;
+        auto inverse = 0ULL;
+        for (auto counter = 0ULL; counter < rom.size(); counter++) {
+            checksum += rom[counter];
+        }
+    
+    
+        checksum += 0x1FE; // add inverse to checksum
+        checksum &= 0xFFFF; // lower 16 bytes
+        inverse = checksum ^ 0xFFFF; // 0xFFFF - checksum
+    
+    
+        // write to rom
+        org = 0xFFDC;
+        write_byte(inverse & 0xFF);
+        write_byte(inverse >> 8);
+        write_byte(checksum & 0xFF);
+        write_byte(checksum >> 8);
     }
-    
-    
-    checksum += 0x1FE; // add inverse to checksum
-    checksum &= 0xFFFF; // lower 16 bytes
-    inverse = checksum ^ 0xFFFF; // 0xFFFF - checksum
-    
-    
-    // write to rom
-    org = 0xFFDC;
-    write_byte(inverse & 0xFF);
-    write_byte(inverse >> 8);
-    write_byte(checksum & 0xFF);
-    write_byte(checksum >> 8);
 }
