@@ -48,6 +48,7 @@ void file_to_string(string file); // speaks for itself
 int lexer(); // the wonderful lexer magic
 int append_token(unsigned int counter, int current_token); // add token to string
 int pass(); // pass function
+void raw_data(int range, string name); // raw data function
 token hint_next_token(); // speaks for itself
 void directive_arg(string str, int range); // directives with one number arg
 long parse_num(string num); // number parse
@@ -72,6 +73,7 @@ int tkOP = 3; // opcode
 int tkLB = 4; // label
 int tkARG = 5; // opcode arg
 int tkNL = 6; // newline
+int tkCOMMA = 7; // comma
 
 
 // ranges
@@ -147,16 +149,17 @@ unsigned long pass_counter = 0;
 // only works with no-args
 typedef struct {
   string name;
-  bool no_arg; unsigned char no_arg_b;     // xxx
-  bool one8; unsigned char one8_b;         // xxx $00
-  bool one16; unsigned char one16_b;       // xxx $1010
-  bool one24; unsigned char one24_b;       // xxx $101010
-  bool ind; unsigned char ind_b;           // xxx ($10)
-  bool lit; unsigned char lit_b;           // xxx #$10
-  bool x8; unsigned char x8_b;             // xxx $10,x
-  bool x16; unsigned char x16_b;           // xxx $1010,x
-  bool x24; unsigned char x24_b;           // xxx $101010,x
-  bool relative; unsigned char relative_b; // xxx -3
+  int no_arg;     // xxx
+  int one8;       // xxx $00
+  int one16;      // xxx $1010
+  int one24;      // xxx $101010
+  int ind;        // xxx ($10)
+  int lit;        // xxx #$10
+  int x8;         // xxx $10,x
+  int x16;        // xxx $1010,x
+  int x24;        // xxx $101010,x
+  int relative8;  // xxx -3
+  int relative16; // xxx -356
 } opcode;
 
 
@@ -166,16 +169,95 @@ typedef struct {
 
 // opcode list
 opcode opcodes[] = {
-  {"xce", t, 0xFB, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"clc", t, 0x18, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"dex", t, 0xCA, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"adc", f, 0x00, t, 0x65, t, 0x6D, t, 0x6F, t, 0x72, t, 0x69, t, 0x63, t, 0x7D, t, 0x7F, f, 0x00},
-  {"rep", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0xC2, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"sep", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0xE2, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"ldx", f, 0x00, t, 0xA6, t, 0xAE, f, 0x00, f, 0x00, t, 0xA2, f, 0x00, f, 0x00, f, 0x00, f, 0x00},
-  {"lda", f, 0x00, t, 0xA5, t, 0xAD, t, 0xAF, t, 0xB2, t, 0xA9, f, 0xB5, f, 0xBD, f, 0xBF, f, 0x00},
-  {"sta", f, 0x00, t, 0x85, t, 0x8D, f, 0x8F, t, 0x92, f, 0x00, f, 0x95, f, 0x9D, f, 0x9F, f, 0x00},
-  {"bpl", f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, f, 0x00, t, 0x10},
+  {"adc"},
+  {"and"},
+  {"asl"},
+  {"bcc"},
+  {"bcs"},
+  {"beq"},
+  {"bit"},
+  {"bmi"},
+  {"bne"},
+  {"bpl"},
+  {"bra"},
+  {"brk", 0x00},
+  {"brl"},
+  {"bvc"},
+  {"bvs"},
+  {"clc", 0x18},
+  {"cld", 0xD8},
+  {"cli", 0x58},
+  {"clv", 0xB8},
+  {"cmp"},
+  {"cop"},
+  {"cpx"},
+  {"cpy"},
+  {"dec"},
+  {"dex", 0xCA},
+  {"dey", 0x88},
+  {"eor"},
+  {"inc"},
+  {"inx", 0xE8},
+  {"iny", 0xC8},
+  {"jmp"},
+  {"jsr"},
+  {"lda"},
+  {"ldx"},
+  {"ldy"},
+  {"lsr"},
+  {"mvn"},
+  {"mvp"},
+  {"nop", 0xEA},
+  {"ora"},
+  {"pea"},
+  {"pei"},
+  {"per"},
+  {"pha", 0x48},
+  {"phb", 0x8B},
+  {"phd", 0x0B},
+  {"phk", 0x4B},
+  {"php", 0x08},
+  {"phx", 0xDA},
+  {"phy", 0x5A},
+  {"pla", 0x68},
+  {"plb", 0xAB},
+  {"pld", 0x2B},
+  {"plp", 0x28},
+  {"plx", 0xFA},
+  {"ply", 0x7A},
+  {"rep"},
+  {"rol"},
+  {"ror"},
+  {"rti", 0x40},
+  {"rtl", 0x6B},
+  {"rts", 0x60},
+  {"sbc"},
+  {"sec", 0x38},
+  {"sed", 0xF8},
+  {"sei", 0x78},
+  {"sep"},
+  {"sta"},
+  {"stp", 0xDB},
+  {"stx"},
+  {"sty"},
+  {"stz"},
+  {"tax", 0xAA},
+  {"tay", 0xA8},
+  {"tcd", 0x5B},
+  {"tcs", 0x1B},
+  {"tdc", 0x7B},
+  {"trb"},
+  {"tsc", 0x3B},
+  {"tsx", 0xBA},
+  {"txa", 0x8A},
+  {"txs", 0x9A},
+  {"txy", 0x9B},
+  {"tya", 0x98},
+  {"tyx", 0xBB},
+  {"wai", 0xCB},
+  {"wdm", 0x42},
+  {"xba", 0xEB},
+  {"xce", 0xFB}
 };
 
 
@@ -326,6 +408,27 @@ int lexer()
       continue;
     }
     
+    if (ins[counter] == ',') {
+      if (ct_used == false) {
+        counter++;
+        current_token++;
+        tokens.resize((current_token+2)*sizeof(token));
+        tokens[current_token].token_type = tkCOMMA;
+      } else {
+        // handle vector size
+        tokens.resize((current_token+1)*sizeof(token));
+        
+        // get ready for another loop
+        ct_used = false;
+        counter++;
+        current_token++;
+        tokens.resize((current_token+2)*sizeof(token));
+        tokens[current_token].token_type = tkCOMMA;
+        current_token++;
+      }
+      continue;
+    }
+    
     if (ins[counter] == ' ') {
       if (ct_used == false) {
         counter++;
@@ -423,7 +526,7 @@ int append_token(unsigned int counter, int current_token)
 {
   unsigned int str_length = ins.length() - 1;
   
-  while (ins[counter] != ' ' && ins[counter] != '\n' && ins[counter] != 0x0D) {
+  while (ins[counter] != ' ' && ins[counter] != '\n' && ins[counter] != 0x0D && ins[counter] != ',') {
     if (counter == str_length) {
       counter++;
       break; // no overflows please!
@@ -499,17 +602,9 @@ int pass()
           org = (banksize*cur_bank)+base;
         }
       } else if (tokens[pass_counter].token_i == "db") {
-        while (hint_next_token().token_type != tkNL &&
-             hint_next_token().token_type != tkUNDEF) {
-          directive_arg("db", r8); write_byte(tr & 0xFF);
-        }
+          raw_data(r8, "db");
       } else if (tokens[pass_counter].token_i == "dw") {
-        while (hint_next_token().token_type != tkNL &&
-             hint_next_token().token_type != tkUNDEF) {
-          directive_arg("dw", r16);
-          write_byte(tr >> 8);
-          write_byte(tr & 0xFF);
-        }
+          raw_data(r16, "dw");
       } else if (tokens[pass_counter].token_i == "lorom") {
         lohirom = lorom;
       } else if (tokens[pass_counter].token_i == "hirom") {
@@ -640,6 +735,27 @@ int pass()
   }
   
   return success;
+}
+
+
+void raw_data(int range, string name)
+{
+  while (hint_next_token().token_type != tkNL &&
+         hint_next_token().token_type != tkUNDEF) {
+    if (hint_next_token().token_type == tkCOMMA) {
+      pass_counter++; continue;
+    }
+    
+    directive_arg(name, range);
+    
+    if (range == r8) {
+      write_byte(tr & 0xFF);
+      return;
+    } else if (range == r16) {
+      write_byte(tr >> 8);
+      write_byte(tr & 0xFF);
+    }
+  }
 }
 
 
