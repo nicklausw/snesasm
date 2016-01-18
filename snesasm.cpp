@@ -48,8 +48,8 @@ void file_to_string(string file); // speaks for itself
 int lexer(); // the wonderful lexer magic
 int append_token(unsigned int counter, int current_token); // add token to string
 int pass(); // pass function
-token hint_next_token(unsigned int counter, string cur); // speaks for itself
-int numeric_arg(string str, unsigned int counter, int range); // directives with one number arg
+token hint_next_token(); // speaks for itself
+void directive_arg(string str, int range); // directives with one number arg
 long parse_num(string num); // number parse
 string str_tolower(string str); // lower all caps in string
 void write_byte(unsigned char byte); // write byte to rom
@@ -137,6 +137,10 @@ vector<unsolved> unsolveds;
 int tDB = 0;
 int tDW = 1;
 int tOP = 5;
+
+
+// counter for pass
+unsigned long pass_counter = 0;
 
 
 // opcode struct
@@ -435,41 +439,47 @@ int append_token(unsigned int counter, int current_token)
 
 int pass()
 {  
-  for (unsigned int counter = 0; counter < (tokens.size())/sizeof(token); counter++) {
-    if (tokens[counter].token_type == tkDIR) {
-      if (tokens[counter].token_i == "compcheck") {
+  for (pass_counter = 0; pass_counter < (tokens.size())/sizeof(token); pass_counter++) {
+    if (tokens[pass_counter].token_type == tkDIR) {
+      // directive
+      if (tokens[pass_counter].token_i == "compcheck") {
         compcheck_flag = true;
-      } else if (tokens[counter].token_i == "autoromsize") {
+      } else if (tokens[pass_counter].token_i == "autoromsize") {
         autoromsize_flag = true;
-      } else if (tokens[counter].token_i == "romsize") {
-        counter = numeric_arg("romsize", counter, r8); romsize = tr;
-      } else if (tokens[counter].token_i == "carttype") {
-        counter = numeric_arg("carttype", counter, r8); carttype = tr;
-      } else if (tokens[counter].token_i == "licenseecode") {
-        counter = numeric_arg("licenseecode", counter, r8); licenseecode = tr;
-      } else if (tokens[counter].token_i == "version") {
-        counter = numeric_arg("version", counter, r8); version = tr;
-      } else if (tokens[counter].token_i == "org") {
-        counter = numeric_arg("org", counter, r16); org = tr;
-      } else if (tokens[counter].token_i == "banksize") {
-        counter = numeric_arg("banksize", counter, r16); banksize = tr;
+      } else if (tokens[pass_counter].token_i == "romsize") {
+        directive_arg("romsize", r8); romsize = tr;
+      } else if (tokens[pass_counter].token_i == "carttype") {
+        directive_arg("carttype", r8); carttype = tr;
+      } else if (tokens[pass_counter].token_i == "licenseecode") {
+        directive_arg("licenseecode", r8); licenseecode = tr;
+      } else if (tokens[pass_counter].token_i == "version") {
+        directive_arg("version", r8); version = tr;
+      } else if (tokens[pass_counter].token_i == "org") {
+        directive_arg("org", r16); org = tr;
+        
+        if (banksize_defined == false || rombanks_defined == false) {
+          cerr << "error: rombanks and banksize need to be defined before org\n";
+          return fail;
+        }
+      } else if (tokens[pass_counter].token_i == "banksize") {
+        directive_arg("banksize", r16); banksize = tr;
         banksize_defined = true;
         
         if (rombanks != 0) {
           // go ahead and set size of output
           rom.resize(rombanks*banksize);
         }
-      } else if (tokens[counter].token_i == "rombanks") {
+      } else if (tokens[pass_counter].token_i == "rombanks") {
         // not sure about rombanks limit
-        counter = numeric_arg("rombanks", counter, rNONE); rombanks = tr;
+        directive_arg("rombanks", rNONE); rombanks = tr;
         rombanks_defined = true;
         
         if (banksize != 0) {
           // go ahead and set size of output
           rom.resize(rombanks*banksize);
         }
-      } else if (tokens[counter].token_i == "bank") {
-        counter = numeric_arg("bank", counter, rNONE); cur_bank = tr;
+      } else if (tokens[pass_counter].token_i == "bank") {
+       directive_arg("bank", rNONE); cur_bank = tr;
         
         // reset org
         org = base*(cur_bank+1);
@@ -488,40 +498,45 @@ int pass()
         } else {
           org = (banksize*cur_bank)+base;
         }
-      } else if (tokens[counter].token_i == "db") {
-        while (hint_next_token(counter, "db").token_type != tkNL &&
-             hint_next_token(counter, "db").token_type != tkUNDEF) {
-          counter = numeric_arg("db", counter, r8); write_byte(tr & 0xFF);
+      } else if (tokens[pass_counter].token_i == "db") {
+        while (hint_next_token().token_type != tkNL &&
+             hint_next_token().token_type != tkUNDEF) {
+          directive_arg("db", r8); write_byte(tr & 0xFF);
         }
-      } else if (tokens[counter].token_i == "dw") {
-        while (hint_next_token(counter, "dw").token_type != tkNL &&
-             hint_next_token(counter, "dw").token_type != tkUNDEF) {
-          counter = numeric_arg("dw", counter, r16);
+      } else if (tokens[pass_counter].token_i == "dw") {
+        while (hint_next_token().token_type != tkNL &&
+             hint_next_token().token_type != tkUNDEF) {
+          directive_arg("dw", r16);
           write_byte(tr >> 8);
           write_byte(tr & 0xFF);
         }
-      } else if (tokens[counter].token_i == "lorom") {
+      } else if (tokens[pass_counter].token_i == "lorom") {
         lohirom = lorom;
-      } else if (tokens[counter].token_i == "hirom") {
+      } else if (tokens[pass_counter].token_i == "hirom") {
         lohirom = hirom;
-      } else if (tokens[counter].token_i == "slowrom") {
+      } else if (tokens[pass_counter].token_i == "slowrom") {
         sfrom = slowrom;
-      } else if (tokens[counter].token_i == "fastrom") {
+      } else if (tokens[pass_counter].token_i == "fastrom") {
         sfrom = fastrom;
       } else {
-        cout << "error: unknown directive " << tokens[counter].token_i << "\n";
+        cout << "error: unknown directive " << tokens[pass_counter].token_i << "\n";
         return fail;
       }
-    } else if (tokens[counter].token_type == tkNUM || tokens[counter].token_type == tkARG) {
-      cerr << "error: loose phrase " << tokens[counter].token_i << "\n";
+    } else if (tokens[pass_counter].token_type == tkNUM || tokens[pass_counter].token_type == tkARG) {
+      cerr << "error: loose phrase " << tokens[pass_counter].token_i << "\n";
       return fail;
-    } else if (tokens[counter].token_type == tkOP) {
+    } else if (tokens[pass_counter].token_type == tkOP) {
       // opcode
       int match_count = 0;
-      token next_tok = hint_next_token(counter, "arg check");
+      token next_tok = hint_next_token();
+      
+      if (banksize_defined == false || rombanks_defined == false) {
+        cerr << "error: rombanks and banksize need to be defined before opcodes\n";
+        return fail;
+      }
       
       for (unsigned int opcounter = 0; opcounter < sizeof(opcodes)/sizeof(opcode); opcounter++) {
-        if (tokens[counter].token_i == opcodes[opcounter].name) {
+        if (tokens[pass_counter].token_i == opcodes[opcounter].name) {
           match_count++;
         } else continue;
         
@@ -542,7 +557,7 @@ int pass()
               // in range
               write_byte(opcodes[opcounter].lit_b);
               write_byte(parse_num(next_tok.token_i));
-              counter++; continue;
+              pass_counter++; continue;
             } else {
               cerr << "error: opcode " << opcodes[opcounter].name << " takes only 8-bit literals\n";
               return fail;
@@ -568,7 +583,7 @@ int pass()
             
             write_byte(opcodes[opcounter].relative_b);
             write_byte(relative_temp);
-            counter++; continue;
+            pass_counter++; continue;
           }
           
           if (parse_num(next_tok.token_i) < 256) {
@@ -576,7 +591,7 @@ int pass()
             if (opcodes[opcounter].one8 == true) {
               write_byte(opcodes[opcounter].one8_b);
               write_byte(parse_num(next_tok.token_i));
-              counter++; continue;
+              pass_counter++; continue;
             } else {
               cerr << "error: opcode " << opcodes[opcounter].name << " can't take 8-bit args\n";
               return fail; 
@@ -587,7 +602,7 @@ int pass()
               write_byte(opcodes[opcounter].one16_b);
               write_byte(parse_num(next_tok.token_i) & 0xFF);
               write_byte(parse_num(next_tok.token_i) >> 8);
-              counter++; continue;
+              pass_counter++; continue;
             } else {
               cerr << "error: opcode " << opcodes[opcounter].name << " can't take 16-bit args\n";
               return fail; 
@@ -599,7 +614,7 @@ int pass()
               write_byte(parse_num(next_tok.token_i) & 0xFF);
               write_byte((parse_num(next_tok.token_i) >> 8) & 0xFF); // crazy middle byte
               write_byte(parse_num(next_tok.token_i) >> 16);
-              counter++; continue;
+              pass_counter++; continue;
             } else {
               cerr << "error: opcode " << opcodes[opcounter].name << " can't take 24-bit args\n";
               return fail; 
@@ -610,13 +625,13 @@ int pass()
       
       if (!match_count) {
         // no matches
-        cerr << "error: unknown opcode " << tokens[counter].token_i << "\n";
+        cerr << "error: unknown opcode " << tokens[pass_counter].token_i << "\n";
         return fail;
       }
-    } else if (tokens[counter].token_type == tkLB) {
-      tokens[counter].token_i.pop_back();
-      new_label(tokens[counter].token_i, org);
-    } else if (tokens[counter].token_type == tkNL) {
+    } else if (tokens[pass_counter].token_type == tkLB) {
+      tokens[pass_counter].token_i.pop_back();
+      new_label(tokens[pass_counter].token_i, org);
+    } else if (tokens[pass_counter].token_type == tkNL) {
       continue;
     } else {
       // probably a blank line
@@ -628,27 +643,27 @@ int pass()
 }
 
 
-token hint_next_token(unsigned int counter, string cur)
+token hint_next_token()
 {
-  if (counter >= tokens.size()) {
-    cerr << "error: " << cur << " expects args\n";
+  if (pass_counter >= tokens.size()) {
+    cerr << "error: args expected\n";
     exit(fail);
   }
   
-  return tokens[counter+1];
+  return tokens[pass_counter+1];
 }
 
 
-int numeric_arg(string str, unsigned int counter, int range)
+void directive_arg(string str, int range)
 {
   unsigned int label_search;
   int label_count = 0;
   
-  counter++;
+  pass_counter++;
   
-  if (tokens[counter].token_type == tkOP) { // if it's not number
+  if (tokens[pass_counter].token_type == tkOP) { // if it's not number
     for (label_search = 0; label_search < labels.size(); label_search++) { // look for a label!
-      if (labels[label_search].name == tokens[counter].token_i) {
+      if (labels[label_search].name == tokens[pass_counter].token_i) {
         tr = labels[label_search].val; // it's a match!
         label_count++; // no need for unsolved.
         break;
@@ -657,11 +672,11 @@ int numeric_arg(string str, unsigned int counter, int range)
     
     if (!label_count) { // if no match was found
       // time for an unsolved!
-      new_unsolved(tokens[counter].token_i, org, range-1);
-      return counter;
+      new_unsolved(tokens[pass_counter].token_i, org, range-1);
+      return;
     }
-  } else if (tokens[counter].token_type == tkNUM) {
-    tr = parse_num(tokens[counter].token_i);
+  } else if (tokens[pass_counter].token_type == tkNUM) {
+    tr = parse_num(tokens[pass_counter].token_i);
   } else {
     cerr << "error: " << str << " expects args\n";
     exit(fail);
@@ -679,8 +694,6 @@ int numeric_arg(string str, unsigned int counter, int range)
       exit(fail);
     }
   }
-  
-  return counter;
 }
 
 
