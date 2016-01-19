@@ -39,7 +39,7 @@ loop:
   stz $2100,x
   stz $4200,x
   dex
-  bpl -9
+  bpl loop
 
   ; Set background color to $03E0
   lda #$E0
@@ -57,7 +57,7 @@ loop:
 ;.db $01 $02 $03
 
 forever:
-  jmp $801E ; forever 
+  jmp forever 
 
 
 ; this is a thing.

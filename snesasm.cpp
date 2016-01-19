@@ -662,12 +662,12 @@ int pass()
             cerr << "error: opcode " << opcodes[opcounter].name << " doesn't take literals\n";
             return fail;
           }
-        } else if (next_tok.token_type == tkNUM) {
+        } else if (next_tok.token_type == tkNUM || next_tok.token_type == tkOP) {
           // it's a number!
           // this could go multiple ways.
           
           // ", x"?
-          if ((pass_counter+1) >= tokens.size()) {
+          if ((pass_counter+3) >= tokens.size()) {
           } else {
             if (tokens[pass_counter+2].token_type == tkCOMMA) {
               if (tokens[pass_counter+3].token_i == "x") {
@@ -706,13 +706,13 @@ int pass()
           
           
           // is it relative?
-          if (opcodes[opcounter].relative8 != -1) {
+          if (opcodes[opcounter].relative8 != -1 && org-parse_num(next_tok.token_i) < 256) {
             // it is!
             unsigned char relative_temp;
-            if (next_tok.token_i[0] == '-') {
-              relative_temp = 256-parse_num(next_tok.token_i);
+            if (next_tok.token_i[0] == '-' || ((signed)org-parse_num(next_tok.token_i)) < 0) {
+              relative_temp = org-parse_num(next_tok.token_i);
             } else {
-              relative_temp = parse_num(next_tok.token_i);
+              relative_temp = 254-(org-parse_num(next_tok.token_i));
             }
             
             write_byte(opcodes[opcounter].relative8);
@@ -721,13 +721,13 @@ int pass()
           }
           
           // what about 16 bit relative?
-          if (opcodes[opcounter].relative16 != -1) {
+          if (opcodes[opcounter].relative16 != -1 && org-parse_num(next_tok.token_i) < 65536) {
             // yay!
             unsigned int relative_temp;
-            if (next_tok.token_i[0] == '-') {
-              relative_temp = 65536-parse_num(next_tok.token_i);
+            if (next_tok.token_i[0] == '-' || ((signed)org-parse_num(next_tok.token_i)) < 0) {
+              relative_temp = org-parse_num(next_tok.token_i);
             } else {
-              relative_temp = parse_num(next_tok.token_i);
+              relative_temp = 65534-(org-parse_num(next_tok.token_i));
             }
             
             write_byte(opcodes[opcounter].relative16);
@@ -871,11 +871,20 @@ void directive_arg(string str, int range)
 
 long parse_num(string num)
 {
+  unsigned int label_search;
   string without_sym = num; // declare without symbol
   
   // make 'without symbol' true
   if (!isdigit(without_sym[0])) {
     without_sym.erase(without_sym.begin());
+  }
+  
+  if (isalpha(num[0])) {
+    for (label_search = 0; label_search < labels.size(); label_search++) { // look for a label!
+      if (labels[label_search].name == num) {
+        return labels[label_search].val; // it's a match!
+      }
+    }
   }
   
   // check for invalid symbols
