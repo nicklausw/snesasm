@@ -39,7 +39,7 @@ loop:
 ; stz $2100,x
 ; stz $4200,x
   dex
-;  bpl -3
+  bpl -3
 
   ; Set background color to $03E0
   lda #$E0
