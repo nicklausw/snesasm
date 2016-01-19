@@ -74,6 +74,7 @@ int tkLB = 4; // label
 int tkARG = 5; // opcode arg
 int tkNL = 6; // newline
 int tkCOMMA = 7; // comma
+int tkQUOTE = 8;
 
 
 // ranges
@@ -88,6 +89,8 @@ string ins; // universal file string
 // snes variables
 bool compcheck_flag = false;
 bool autoromsize_flag = false;
+bool name_flag = false;
+string name = "";
 unsigned char romsize = 0;
 unsigned char carttype = 0;
 unsigned char licenseecode = 0;
@@ -339,6 +342,19 @@ void file_to_string(string file)
   ins.clear();
   
   while (counter <= str.length()) {
+    // don't touch inside quotes
+    if (str[counter] == '\"') {
+      ins.append("\"");
+      while (str[counter] != '\"') {
+        counter++;
+        if (counter == str.length())
+          break;
+      }
+    } else {
+      ins.append(string(1, str[counter]));
+      counter++;
+    }
+    
     if (str[counter] == ' ') {
       ins.append(" ");
       while (str[counter] == ' ') {
@@ -463,6 +479,34 @@ int lexer()
       
       // no case sensitivity
       tokens[current_token].token_i = str_tolower(tokens[current_token].token_i);
+      
+      // no need for a counter++ here, it's handled above.
+      continue;
+    } else if (ins[counter] == '\"') {
+      // quote!
+      ct_used = true;
+      tokens[current_token].token_type = tkQUOTE;
+      
+      // quotes get their own append function
+      
+      unsigned int str_length = ins.length() - 1;
+      
+      counter++;
+  
+      while (ins[counter] != '\"') {
+        if (counter == str_length) {
+          counter++;
+          break; // no overflows please!
+        }
+    
+        tokens[current_token].token_i.append(string(1, ins[counter]));
+        counter++;
+      }
+      
+      tokens[current_token].token_i.append(string(1, '\"'));
+      
+      counter++;
+      
       
       // no need for a counter++ here, it's handled above.
       continue;
@@ -599,6 +643,23 @@ int pass()
           return fail;
         } else {
           org = (banksize*cur_bank)+base;
+        }
+      } else if (tokens[pass_counter].token_i == "name") {
+        if (hint_next_token().token_type != tkQUOTE) {
+          cerr << "error: name expects string value\n";
+          return fail;
+        }
+        
+        name_flag = true;
+        
+        string name_quote_raw = hint_next_token().token_i;
+        
+        for (unsigned int name_counter = 0; name_quote_raw[name_counter] != '\"'; name_counter++) {
+          name.append(string(1, name_quote_raw[name_counter]));
+          if (name_counter == 21) {
+            cerr << "error: name can have only up to 21 characters\n";
+            return fail;
+          }
         }
       } else if (tokens[pass_counter].token_i == "db") {
           raw_data(r8, "db");
@@ -1034,6 +1095,13 @@ void snes()
   }
   
   base = 0x8000;
+  
+  org = 0xFFC0;
+  if (name_flag == true) {
+    for (unsigned int name_counter = 0; name_counter < name.length(); name_counter++) {
+      write_byte(name[name_counter]);
+    }
+  }
   
   org = 0xFFD5;
   write_byte(build_byte);

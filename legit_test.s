@@ -7,11 +7,11 @@
 ; currently won't build all the way.
 
 ; things that need to work:
-; name directive
 ; proper a and xy size control
 
 ; header
 .compcheck ; checksum
+.name "LEGIT  TEST"
 .romsize $7 ; rom size
 .carttype 0 ; rom only
 .licenseecode 0
