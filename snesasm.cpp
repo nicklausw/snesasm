@@ -796,8 +796,7 @@ int pass()
 
 void raw_data(int range, string name)
 {
-  while (hint_next_token().token_type != tkNL &&
-         hint_next_token().token_type != tkUNDEF) {
+  while (hint_next_token().token_type != tkNL) {
     if (hint_next_token().token_type == tkCOMMA) {
       pass_counter++; continue;
     }

@@ -50,11 +50,6 @@ loop:
   ; Maximum screen brightness
   lda #$0F
   sta $2100
-  
-; stylistic commas
-;.dw $1234,$5678,$9ABC
-;.db $54, $45, $55
-;.db $01 $02 $03
 
 forever:
   jmp forever 
@@ -63,6 +58,10 @@ forever:
 ; this is a thing.
 brl $4443
 
+; stylistic commas
+.dw $1234,$5678,$9ABC
+;.db $54, $45, $55
+;.db $01 $02 $03
 
 .org $fffd
 .dw reset
