@@ -8,8 +8,6 @@
 
 ; things that need to work:
 ; name directive
-; ppu clear routine
-; opcodes with label args
 ; proper a and xy size control
 
 ; header
