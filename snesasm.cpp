@@ -644,7 +644,7 @@ int pass()
             cerr << "error: opcode " << opcodes[opcounter].name << " expects args\n";
             return fail;
           }
-        }  else if (next_tok.token_i[0] == '#') {
+        } else if (next_tok.token_i[0] == '#') {
           // it's a literal!
           next_tok.token_i.erase(0, 1);
           if (opcodes[opcounter].lit != -1) {
@@ -665,6 +665,45 @@ int pass()
         } else if (next_tok.token_type == tkNUM) {
           // it's a number!
           // this could go multiple ways.
+          
+          // ", x"?
+          if ((pass_counter+1) >= tokens.size()) {
+          } else {
+            if (tokens[pass_counter+2].token_type == tkCOMMA) {
+              if (tokens[pass_counter+3].token_i == "x") {
+                if (opcodes[opcounter].x8 != -1) {
+                  // yay, x8
+                  if (parse_num(tokens[pass_counter+1].token_i) < 256) {
+                    write_byte(opcodes[opcounter].x8);
+                    write_byte(parse_num(tokens[pass_counter+1].token_i));
+                    pass_counter += 3; continue;
+                  }
+                } else if (opcodes[opcounter].x16 != -1) {
+                  if (parse_num(tokens[pass_counter+1].token_i) < 65536) {
+                    write_byte(opcodes[opcounter].x16);
+                    write_byte((parse_num(tokens[pass_counter+1].token_i) & 0xFF));
+                    write_byte((parse_num(tokens[pass_counter+1].token_i) >> 8));
+                    pass_counter += 3; continue;
+                  }
+                } else if (opcodes[opcounter].x24 != -1) {
+                  if (parse_num(tokens[pass_counter+1].token_i) < 0xFFFFFF+1) {
+                    write_byte(opcodes[opcounter].x24);
+                    write_byte((parse_num(tokens[pass_counter+1].token_i) & 0xFF));
+                    write_byte(((parse_num(tokens[pass_counter+1].token_i) >> 8) & 0xFF));
+                    write_byte((parse_num(tokens[pass_counter+1].token_i) >> 16));
+                    pass_counter += 3; continue;
+                  }
+                  
+                  cerr << "error: number out of range\n";
+                  return fail;
+                }
+              } else {
+                cerr << "error: xxx $XX, x only for now\n";
+                return fail;
+              }
+            }
+          }
+          
           
           // is it relative?
           if (opcodes[opcounter].relative8 != -1) {
@@ -779,8 +818,8 @@ void raw_data(int range, string name)
 token hint_next_token()
 {
   if (pass_counter >= tokens.size()) {
-    cerr << "error: args expected\n";
-    exit(fail);
+    token new_tok = {tkNL, ""};
+    return new_tok;
   }
   
   return tokens[pass_counter+1];

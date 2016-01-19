@@ -36,10 +36,10 @@ reset:
 ; Clear PPU registers
   ldx #$33
 loop:
-; stz $2100,x
-; stz $4200,x
+  stz $2100,x
+  stz $4200,x
   dex
-  bpl -3
+  bpl -9
 
   ; Set background color to $03E0
   lda #$E0
@@ -50,12 +50,14 @@ loop:
   ; Maximum screen brightness
   lda #$0F
   sta $2100
+  
 ; stylistic commas
 ;.dw $1234,$5678,$9ABC
 ;.db $54, $45, $55
 ;.db $01 $02 $03
+
 forever:
-;  jmp forever
+  jmp $801E ; forever 
 
 
 ; this is a thing.
