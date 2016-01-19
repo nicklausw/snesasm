@@ -805,7 +805,6 @@ void raw_data(int range, string name)
     
     if (range == r8) {
       write_byte(tr & 0xFF);
-      return;
     } else if (range == r16) {
       write_byte(tr >> 8);
       write_byte(tr & 0xFF);

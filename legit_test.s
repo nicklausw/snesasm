@@ -60,8 +60,8 @@ brl $4443
 
 ; stylistic commas
 .dw $1234,$5678,$9ABC
-;.db $54, $45, $55
-;.db $01 $02 $03
+.db $54, $45, $55
+.db $01 $02 $03
 
 .org $fffd
 .dw reset
