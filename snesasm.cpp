@@ -495,8 +495,8 @@ int lexer()
   
       while (ins[counter] != '\"') {
         if (counter == str_length) {
-          counter++;
-          break; // no overflows please!
+          cerr << "error: unclosed quote\n";
+          return fail;
         }
     
         tokens[current_token].token_i.append(string(1, ins[counter]));
